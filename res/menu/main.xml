@@ -1,0 +1,32 @@
+<menu xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:tools="http://schemas.android.com/tools"
+    tools:context="com.dragon.xchat.MainActivity">
+    <item
+        android:id="@+id/action_query"
+        android:icon="@drawable/actionbar_search_icon"
+        android:showAsAction="always"
+        android:title="@string/action_query" />
+
+    <item
+        android:id="@+id/action_add"
+        android:icon="@drawable/actionbar_add_icon"
+        android:showAsAction="always"
+        android:title="@string/action_add">
+
+        <menu>
+            <item
+                android:id="@+id/action_camera"
+                android:icon="@drawable/actionbar_camera_icon"
+                android:title="@string/action_camera" />
+        </menu>
+
+    </item>
+
+            <item
+                android:id="@+id/action_settings"
+                android:icon="@drawable/actionbar_setting_icon"
+                android:title="@string/action_settings"
+                android:showAsAction="never|withText"/>
+
+
+</menu>

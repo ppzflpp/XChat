@@ -1,0 +1,40 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+
+    <string name="app_name">XChat</string>
+    <string name="title_activity_main">XChat</string>
+    <string name="chat">聊天</string>
+    <string name="discover">发现</string>
+    <string name="contacts">通讯录</string>
+    <string name="hello_world">Hello world!</string>
+    <string name="action_settings">设置</string>
+    <string name="friends_zone">朋友圈</string>
+    <string name="scan">扫一扫</string>
+    <string name="shake">摇一摇</string>
+    <string name="near">附进的人</string>
+    <string name="bottle">漂流瓶</string>
+    <string name="team_name">BOOM团队</string>
+    <string name="team_desc">欢迎您使用XChat</string>
+    <string name="action_query">查询</string>
+    <string name="action_add">添加</string>
+    <string name="action_camera">拍照分享</string>
+    <string name="title_activity_register">注册</string>
+    <string name="register_hit"></string>
+     <string name="register_username_hit">请输入用户名</string>
+    <string name="register_password_hit">请输入密码</string>
+    <string name="register_password_confirm_hit">请再次输入密码</string>
+    <string name="user_registering">正在注册&#8230;&#8230;&#8230;</string>
+    <string name="register_success">注册成功</string>
+    <string name="register_fail">注册失败</string>
+    <string name="user_name_length_fail">用户名至少需要%d位</string>
+    <string name="user_password_length_fail">密码至少需要%d位</string>
+    <string name="passwork_not_same">两次密码不一致</string>
+    <string name="login_success">登陆成功</string>
+    <string name="login_fail">登陆失败</string>
+    <string name="user_logining">正在登陆&#8230;&#8230;&#8230;</string>
+    <string name="chat_with">与%s聊天</string>
+    <string name="chat_input">请输入聊天内容</string>
+    <string name="chat_send">发送</string>
+    <string name="me">我</string>
+
+</resources>

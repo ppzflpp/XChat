@@ -1,0 +1,25 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+
+    <string name="app_name">XChat</string>
+    <string name="title_activity_main">MainActivity</string>
+    <string name="title_section1">Chat</string>
+    <string name="title_section2">Discover</string>
+    <string name="title_section3">Contacts</string>
+    <string name="hello_world">Hello world!</string>
+    <string name="action_settings">Settings</string>
+    <string name="title_activity_register">Register</string>
+    <string name="register_username_hit">please input username</string>
+    <string name="register_password_hit">password</string>
+    <string name="register_password_confirm_hit">Confirm password</string>
+    <string name="user_registering">Registering</string>
+    <string name="register_success">Register success</string>
+    <string name="register_fail">Register fail</string>
+    <string name="user_name_length_fail">用户名至少需要%d位</string>
+    <string name="user_password_length_fail">密码至少需要%d位</string>
+    <string name="passwork_not_same">注册失败</string>
+	 <string name="chat_with">与%s聊天</string>
+	 <string name="chat_input">请输入聊天内容</string>
+	 <string name="me">Me</string>
+	 
+</resources>

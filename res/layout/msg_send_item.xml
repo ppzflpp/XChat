@@ -1,0 +1,34 @@
+<RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="wrap_content"
+    android:layout_height="wrap_content"
+    android:paddingRight="10dip"
+    android:layout_margin="5dip">
+
+    <ImageView
+        android:id="@+id/msg_send_icon"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:gravity="center"
+        android:layout_alignParentRight="true"
+        android:layout_marginTop="5dip"
+        android:src="@drawable/ic_launcher"/>
+
+    <TextView
+        android:id="@+id/msg_send_name"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        style="?android:textAppearanceMediumInverse"
+        android:layout_toLeftOf="@id/msg_send_icon"
+        android:layout_alignParentTop="true"
+        android:layout_marginRight="10dip" />
+
+    <TextView
+        android:id="@+id/msg_send_content"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        style="?android:textAppearanceSmallInverse"
+        android:layout_toLeftOf="@id/msg_send_icon"
+        android:layout_below="@id/msg_send_name"
+        android:background="@drawable/bg_msg_send"
+        android:layout_marginRight="5dip" />
+</RelativeLayout>
