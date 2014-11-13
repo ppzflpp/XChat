@@ -110,14 +110,9 @@ public class RegisterActivity extends BaseActivity {
         	boolean success = false;
             try {
             	// TODO Auto-generated method stub
-				success = ConnectorHelper.getInstance(RegisterActivity.this).connect();
-				if(success){
-					Log.d("TAG","connect success,begin to register");
-					success = ConnectorHelper.getInstance(RegisterActivity.this).register(userName,password);
-					if(success)
-						Log.d("TAG","register success");
-					else
-						Log.d("TAG","register fail");
+            	if(mServiceConnection != null){
+            		success = mChatService.register(userName, password);           	
+				
 				}else{
 					Log.d("TAG","connect fail");
 				}

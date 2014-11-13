@@ -13,6 +13,7 @@ import android.app.Activity;
 import android.os.Bundle;
 import android.os.Handler;
 import android.os.HandlerThread;
+import android.os.RemoteException;
 import android.util.Log;
 import android.view.Gravity;
 import android.view.LayoutInflater;
@@ -33,56 +34,47 @@ public class ChatActivity extends BaseActivity {
 	private EditText mChatInputView;
 	private Button mChatSendView;
 	private ScrollView mScrollview;
-	
+
 	private HandlerThread mHandlerThread = null;
 	private Handler mThreadHandler = null;
 	private Chat mChat;
 	private String mReceivedMsg = "";
-	private MessageListener mMessageListener;
-	
+
 	private final static int UPDATE_CHAT_MSG = 0;
-	private Handler mMainHander = new Handler(){
-		public void handleMessage(android.os.Message msg){
+	private Handler mMainHander = new Handler() {
+		public void handleMessage(android.os.Message msg) {
 			super.handleMessage(msg);
-			switch(msg.what){
+			switch (msg.what) {
 			case UPDATE_CHAT_MSG:
-				addContentView(true,mReceivedMsg);
-				//mScrollview.fullScroll(ScrollView.FOCUS_DOWN);
+				addContentView(true, mReceivedMsg);
+				// mScrollview.fullScroll(ScrollView.FOCUS_DOWN);
 				break;
 			}
 		}
 	};
+	
 
 	@Override
 	protected void onCreate(Bundle savedInstanceState) {
 		// TODO Auto-generated method stub
+		
 		super.onCreate(savedInstanceState);
 		setContentView(R.layout.activity_chat);
 
-
-		mFriend = (Friend) this.getIntent().getSerializableExtra("friend");
+		mFriend = (Friend) this.getIntent().getParcelableExtra("friend");
 		setTitle(this.getString(R.string.chat_with, mFriend.getName()));
-	
-		mHandlerThread = new HandlerThread("Chat"){
+
+		mHandlerThread = new HandlerThread("Chat") {
 
 			@Override
 			protected void onLooperPrepared() {
 				// TODO Auto-generated method stub
 				super.onLooperPrepared();
-				
-				mMessageListener = new MessageListener() {
 
-					@Override
-					public void processMessage(Chat chat, Message msg) {
-						// TODO Auto-generated method stub
-						processMessageLocked(chat,msg);			
-					}
 
-				};
-				
-			}		
+			}
 		};
-		
+
 		mHandlerThread.start();
 		mThreadHandler = new Handler(mHandlerThread.getLooper());
 
@@ -100,66 +92,52 @@ public class ChatActivity extends BaseActivity {
 							getString(R.string.chat_input), Toast.LENGTH_SHORT)
 							.show();
 				} else {
-					addContentView(false,mChatInputView.getText().toString());
+					addContentView(false, mChatInputView.getText().toString());
 
 					mChatInputView.setText("");
 					mThreadHandler.post(new Runnable() {
 						public void run() {
-							if (mChat == null) {
-								mChat = ConnectorHelper.getInstance(
-										getApplicationContext()).createChat(
-										mFriend.getUid(), mMessageListener);
+							if (mChatService != null) {
+								try {
+									mChatService.sendMessage(mFriend.getUid(),
+											null, content);
+								} catch (RemoteException e) {
+									// TODO Auto-generated catch block
+									e.printStackTrace();
+								}
+
 							}
-							try {
-								mChat.sendMessage(content);
-							} catch (NotConnectedException e) {
-								// TODO Auto-generated catch block
-								e.printStackTrace();
-							} catch (XMPPException e) {
-								// TODO Auto-generated catch block
-								e.printStackTrace();
-							}
+
 						}
+
 					});
 				}
 			}
 
 		});
-		
-		mScrollview = (ScrollView)findViewById(R.id.scrollview);
 
+		mScrollview = (ScrollView) findViewById(R.id.scrollview);	
+		
 	}
-	
-	private void processMessageLocked(Chat chat,Message msg){
-		if(mChat != null || chat != null)
-			Log.d("TAG","mChat = " + mChat.getThreadID() + ",chat = " + chat.getThreadID());
-		if(mChat != chat){
-			if(mChat != null){
-				mChat.removeMessageListener(mMessageListener);
-			}
-			mChat = chat;
-		}
-		
-		mReceivedMsg = msg.getBody();
-		
-		Log.d("TAG","mReceivedMsg = " + mReceivedMsg);
-		
-		mMainHander.sendEmptyMessage(UPDATE_CHAT_MSG); 
-	}
-	
-	private void addContentView(boolean isReceivedMsg,String msg) {
+
+
+	private void addContentView(boolean isReceivedMsg, String msg) {
 		View view = null;
-		if(isReceivedMsg){
-			view = LayoutInflater.from(getApplicationContext()).inflate(R.layout.msg_receive_item, null);
-			((TextView)view.findViewById(R.id.msg_receive_name)).setText(mFriend.getName());
-			((TextView)view.findViewById(R.id.msg_receive_content)).setText(msg);
+		if (isReceivedMsg) {
+			view = LayoutInflater.from(getApplicationContext()).inflate(
+					R.layout.msg_receive_item, null);
+			((TextView) view.findViewById(R.id.msg_receive_name))
+					.setText(mFriend.getName());
+			((TextView) view.findViewById(R.id.msg_receive_content))
+					.setText(msg);
+		} else {
+			view = LayoutInflater.from(getApplicationContext()).inflate(
+					R.layout.msg_send_item, null);
+			((TextView) view.findViewById(R.id.msg_send_name))
+					.setText(R.string.me);
+			((TextView) view.findViewById(R.id.msg_send_content)).setText(msg);
 		}
-		else{
-			view = LayoutInflater.from(getApplicationContext()).inflate(R.layout.msg_send_item, null);
-			((TextView)view.findViewById(R.id.msg_send_name)).setText(R.string.me);
-			((TextView)view.findViewById(R.id.msg_send_content)).setText(msg);
-		}
-		
+
 		LinearLayout.LayoutParams ll = new LinearLayout.LayoutParams(
 				RelativeLayout.LayoutParams.WRAP_CONTENT,
 				RelativeLayout.LayoutParams.WRAP_CONTENT);
@@ -172,15 +150,13 @@ public class ChatActivity extends BaseActivity {
 		}
 		mInputContentParentView.addView(view, ll);
 	}
-	
-	protected void onResume()
-	{
+
+	protected void onResume() {
 		super.onResume();
 	}
 
-
-	protected void onDestroy(){
+	protected void onDestroy() {
 		super.onDestroy(mFriend.getUid());
 	}
-	
+
 }

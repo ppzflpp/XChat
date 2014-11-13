@@ -6,6 +6,7 @@ import android.app.Activity;
 import android.content.Intent;
 import android.os.AsyncTask;
 import android.os.Bundle;
+import android.os.RemoteException;
 import android.support.v4.app.ListFragment;
 import android.util.Log;
 import android.view.View;
@@ -17,9 +18,9 @@ import com.dragon.xchat.network.ConnectorHelper;
 
 public class ChatFragment extends ListFragment {
 
-    private FriendsTask mFriendsTask = null;
     private List<Friend> mFriendsList = null;
     private ChatAdapter mChatAdapter = null;
+    private String mUserName = null;
 
 
     /**
@@ -27,10 +28,7 @@ public class ChatFragment extends ListFragment {
      * fragment (e.g. upon screen orientation changes).
      */
     public ChatFragment(String userName) {   	
-    	if(mFriendsTask == null){
-    		mFriendsTask = new FriendsTask(userName);
-    		mFriendsTask.execute();
-    	}
+    	mUserName = userName;
     }
 
     @Override
@@ -39,6 +37,7 @@ public class ChatFragment extends ListFragment {
 
         // TODO: Change Adapter to display your content
         mChatAdapter = new ChatAdapter(this.getActivity().getApplicationContext());
+        mChatAdapter.setList(mFriendsList);
         setListAdapter(mChatAdapter);
     }
 
@@ -50,7 +49,6 @@ public class ChatFragment extends ListFragment {
     @Override
     public void onAttach(Activity activity) {
         super.onAttach(activity);
-
     }
 
     @Override
@@ -70,37 +68,13 @@ public class ChatFragment extends ListFragment {
         	getActivity().startActivity(intent);
         }
     }
-
     
-    class FriendsTask extends AsyncTask<Void,Void,Boolean>{
-    	
-    	private String userName = null;
-    	
-    	public FriendsTask(String userName){
-    		this.userName = userName;
+    public void setFriendsList(List<Friend> list){
+    	mFriendsList  = list;
+    	if(mChatAdapter != null){
+    		mChatAdapter.setList(mFriendsList);
+    		mChatAdapter.notifyDataSetChanged();
     	}
-
-		@Override
-		protected Boolean doInBackground(Void... arg0) {
-			// TODO Auto-generated method stub			
-			mFriendsList = ConnectorHelper.getInstance(getActivity()).getAllFriends();
-			if(mFriendsList == null)
-				return false;
-			return true;
-		}
-
-		@Override
-		protected void onPostExecute(Boolean result) {
-			// TODO Auto-generated method stub
-			super.onPostExecute(result);
-			Log.d("TAG","result = " + result);
-			if(result){
-				mChatAdapter.setList(mFriendsList);
-				mChatAdapter.notifyDataSetChanged();
-			}
-			
-		}
-    	
     }
 
 }

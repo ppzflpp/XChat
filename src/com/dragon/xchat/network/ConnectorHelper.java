@@ -46,6 +46,11 @@ public class ConnectorHelper {
 		return false;
 	}
 	
+	public void sendMessage(String jId,String threadId,String msg){
+		if(mConnector != null)
+			 mConnector.sendMessage(jId,threadId,msg);
+	}
+	
 	public void registerChatListener(){
 		if(mConnector != null)
 			 mConnector.registerChatListener();

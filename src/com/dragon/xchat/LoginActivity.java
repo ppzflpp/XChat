@@ -3,6 +3,7 @@ package com.dragon.xchat;
 import android.annotation.TargetApi;
 import android.app.Activity;
 import android.content.ComponentName;
+import android.content.Context;
 import android.content.Intent;
 import android.content.ServiceConnection;
 import android.os.AsyncTask;
@@ -10,6 +11,7 @@ import android.os.Build;
 import android.os.Bundle;
 import android.os.IBinder;
 import android.os.RemoteException;
+import android.util.Log;
 import android.view.KeyEvent;
 import android.view.View;
 import android.view.View.OnClickListener;
@@ -24,6 +26,7 @@ import com.dragon.xchat.network.ConnectorHelper;
 import com.dragon.xchat.service.ChatService;
 import com.dragon.xchat.service.IChatService;
 import com.dragon.xchat.utils.InputUtils;
+import com.dragon.xchat.utils.LogUtils;
 
 /**
  * A login screen that offers login via email/password.
@@ -40,32 +43,12 @@ public class LoginActivity extends BaseActivity {
 
 	private String mUserNameValue;
 	private String mPasswordValue;
-	
-	private IChatService mChatService;
-	private ServiceConnection mServiceConnection = new ServiceConnection(){
-
-		@Override
-		public void onServiceConnected(ComponentName arg0, IBinder binder) {
-			// TODO Auto-generated method stub
-			mChatService =  IChatService.Stub.asInterface(binder);  
-		}
-
-		@Override
-		public void onServiceDisconnected(ComponentName arg0) {
-			// TODO Auto-generated method stub
-			
-		}
-		
-	};
 
 	@Override
 	protected void onCreate(Bundle savedInstanceState) {
 		super.onCreate(savedInstanceState);
 		setContentView(R.layout.activity_login);
-		
-		Intent i = new Intent(this,ChatService.class);
-		this.bindService(i, mServiceConnection, BIND_AUTO_CREATE);
-		
+
 		// Set up the login form.
 		mUserNameView = (AutoCompleteTextView) findViewById(R.id.username);
 

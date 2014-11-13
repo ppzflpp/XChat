@@ -9,6 +9,7 @@ import org.jivesoftware.smack.packet.Message;
 
 import com.dragon.xchat.data.ChatMessage;
 import com.dragon.xchat.data.ChatMessageCallback;
+import com.dragon.xchat.data.Friend;
 import com.dragon.xchat.data.MessageCallback;
 import com.dragon.xchat.network.ConnectorHelper;
 
@@ -17,6 +18,7 @@ import android.content.Context;
 import android.content.Intent;
 import android.os.IBinder;
 import android.os.RemoteException;
+import android.util.Log;
 
 public class ChatService extends Service {
 	
@@ -31,6 +33,7 @@ public class ChatService extends Service {
 		if(mService == null){
 			mService = new ChatServiceImpl(this);
 		}
+		Log.d("TAG","onBind");
 		return mService;
 	}
 
@@ -106,9 +109,35 @@ public class ChatService extends Service {
 			}
 			return result;
 		}
+		
+		@Override
+		public boolean register(String userName, String password)
+				throws RemoteException {
+			// TODO Auto-generated method stub
+			boolean result = getConnectorHepler().connect()
+					&& getConnectorHepler().register(userName, password);
+			
+			return result;
+		}
+		
 		@Override
 		public void close(){
 			
+		}
+		
+
+		@Override
+		public void sendMessage(String jId, String threadId, String msg)
+				throws RemoteException {
+			// TODO Auto-generated method stub
+			mHelper.sendMessage(jId, threadId, msg);
+		}
+		
+
+		@Override
+		public List<Friend> getAllFriends() throws RemoteException {
+			// TODO Auto-generated method stub
+			return mHelper.getAllFriends();
 		}
 		
 		private ConnectorHelper getConnectorHepler(){
@@ -147,6 +176,8 @@ public class ChatService extends Service {
 				mChatMessageCallbackMap.remove(uid);
 			}
 		}
+
+
 		
 	}
 

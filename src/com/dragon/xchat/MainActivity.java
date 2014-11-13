@@ -6,7 +6,9 @@ import android.app.ActionBar.TabListener;
 import android.app.Activity;
 import android.app.FragmentTransaction;
 import android.graphics.drawable.ColorDrawable;
+import android.os.AsyncTask;
 import android.os.Bundle;
+import android.os.RemoteException;
 import android.support.v4.app.Fragment;
 import android.support.v4.app.FragmentActivity;
 import android.support.v4.app.FragmentManager;
@@ -18,8 +20,11 @@ import android.view.ActionMode;
 import android.view.Menu;
 import android.view.MenuItem;
 
+import java.util.List;
 import java.util.Locale;
 
+import com.dragon.xchat.BaseActivity.ServiceConnectCallback;
+import com.dragon.xchat.data.Friend;
 import com.dragon.xchat.network.ConnectorHelper;
 
 public class MainActivity extends BaseActivity {
@@ -39,6 +44,28 @@ public class MainActivity extends BaseActivity {
 
 	@Override
 	protected void onCreate(Bundle savedInstanceState) {
+		this.setServiceCallback(new ServiceConnectCallback(){
+
+			@Override
+			public void onBind() {
+				// TODO Auto-generated method stub
+				synchronized(mLock){
+					if(!mCanLoadData){
+						mCanLoadData = true;
+						return;
+					}
+				}
+				loadData();
+			}
+
+			@Override
+			public void onUnBind() {
+				// TODO Auto-generated method stub
+				
+			}
+			
+		});
+		
 		super.onCreate(savedInstanceState);
 		setContentView(R.layout.activity_main);
 
@@ -113,8 +140,25 @@ public class MainActivity extends BaseActivity {
 
 					}));
 		}
+		
+		/*******************************************/
+		synchronized(mLock){
+			if(!mCanLoadData){
+				mCanLoadData = true;
+				return;
+			}
+		}
+		loadData();
+		/**********************************************/
 	}
 
+	private void loadData(){
+		ChatFragment fragment = (ChatFragment)((ViewPagerAdapter)mSectionsPagerAdapter).getFragemnt(CHAT_FRAGMENT_POS);
+		Log.d("TAG","fragment = " + fragment);
+		FriendsTask task = new FriendsTask(fragment,null);
+		task.execute();
+	}
+	
 	@Override
 	public boolean onCreateOptionsMenu(Menu menu) {
 		// Inflate the menu; this adds items to the action bar if it is present.
@@ -149,9 +193,25 @@ public class MainActivity extends BaseActivity {
 	 */
 	public class ViewPagerAdapter extends FragmentPagerAdapter {
 
+		private ChatFragment mChatFragment;
+		
 		public ViewPagerAdapter(FragmentManager fm) {
 			super(fm);
 			// TODO Auto-generated constructor stub
+		}
+		
+		public Fragment getFragemnt(int pos){
+			Fragment fm = null;
+			switch (pos) {
+			case DISCOVER_FRAGMENT_POS:
+				break;
+			case CHAT_FRAGMENT_POS:
+				fm  = mChatFragment;
+				break;
+			default:
+				break;
+			}
+			return fm;
 		}
 
 		@Override
@@ -163,7 +223,8 @@ public class MainActivity extends BaseActivity {
 				fm = new DiscoverFragment();
 				break;
 			case CHAT_FRAGMENT_POS:
-				fm = new ChatFragment(mUserName);
+				mChatFragment = new ChatFragment(mUserName);
+				fm  = mChatFragment;
 				break;
 			default:
 				Log.e(TAG, "ViewPagaerAdapter,error occur");
@@ -199,4 +260,46 @@ public class MainActivity extends BaseActivity {
 	protected void onDestroy(){
 		super.onDestroy(mUserName);
 	}
+	
+	   
+    class FriendsTask extends AsyncTask<Void,Void,Boolean>{
+    	
+    	private String userName = null;
+    	private ChatFragment chatFragment = null;
+    	private List<Friend> friendsList = null;
+    	
+    	public FriendsTask(ChatFragment fragment,String userName){
+    		chatFragment = fragment ;
+    		this.userName = userName;
+    	}
+
+		@Override
+		protected Boolean doInBackground(Void... arg0) {
+			// TODO Auto-generated method stub	
+			try {
+				friendsList = mChatService.getAllFriends();
+			} catch (RemoteException e) {
+				// TODO Auto-generated catch block
+				e.printStackTrace();
+			}
+			if(friendsList == null)
+				return false;
+			return true;
+		}
+
+		@Override
+		protected void onPostExecute(Boolean result) {
+			// TODO Auto-generated method stub
+			super.onPostExecute(result);
+			Log.d("TAG","result = " + result);
+			if(friendsList != null){
+				Log.d("TAG","22 size = " + friendsList.size());
+			}
+			if(result){
+				chatFragment.setFriendsList(friendsList);
+			}
+			
+		}
+    	
+    }
 }

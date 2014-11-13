@@ -11,7 +11,9 @@ import java.security.cert.CertificateException;
 import java.security.cert.X509Certificate;
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 import javax.net.ssl.SSLContext;
 import javax.net.ssl.TrustManager;
@@ -42,6 +44,7 @@ import org.jivesoftware.smackx.carbons.CarbonManager;
 import com.dragon.xchat.data.ChatMessage;
 import com.dragon.xchat.data.Friend;
 import com.dragon.xchat.service.ChatService;
+import com.dragon.xchat.utils.LogUtils;
 
 import android.content.Context;
 import android.util.Log;
@@ -56,6 +59,7 @@ public class Connector {
 	private ConnectionConfiguration mConfig = null;
 	private ChatManager mChatManager;
 	private ChatManagerListener mChatManagerListener;
+	private Map<String,Chat> mChatList = new HashMap<String,Chat>();
 
 	private ChatService mService = null;
 
@@ -153,6 +157,47 @@ public class Connector {
 		return success;
 	}
 
+	public void sendMessage(String jId,String threadId,String msg){
+		Chat chat = mChatList.get(jId);
+		Log.d("TAG","jid = " + jId);
+		if(chat == null){
+			Log.d("TAG","chat is null");
+			ChatManager manager = getChatManager();
+			chat = manager.createChat(jId, new MessageListener(){
+
+				@Override
+				public void processMessage(Chat chat, Message msg) {
+					// TODO Auto-generated method stub
+					Log.d("TAG","msg = " + msg.getBody());
+					if(mService != null){
+						notifyMessage(msg);
+					}
+				}
+				
+			});
+			mChatList.put(jId, chat);
+		}
+		
+		Log.d("TAG","listeners = " + chat.getListeners().size());
+		
+		try {
+			chat.sendMessage(msg);
+			Log.d("TAG","send message,msg = " + msg);
+		} catch (NotConnectedException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		} catch (XMPPException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
+	}
+	
+	private ChatManager getChatManager(){
+		if (mChatManager == null){
+			mChatManager = ChatManager.getInstanceFor(mConnection);			
+		}
+		return mChatManager;
+	}
 	
 	public void registerChatListener(){
 		if (mConnection != null) {
@@ -179,19 +224,12 @@ public class Connector {
 								public void processMessage(Chat chat,
 										Message msg) {
 									// TODO Auto-generated method stub
-									if(!chat.getListeners().isEmpty())
-										chat.removeMessageListener(this);
-									ChatMessage chatMessage = new ChatMessage();
-									chatMessage.setjId(msg.getFrom());
-									chatMessage.setFrom(msg.getFrom());
-									chatMessage.setBody(msg.getBody());
-									chatMessage.setTo(msg.getTo());
-									mService.notifyMessage(chatMessage);
+									notifyMessage(msg);
+									LogUtils.printMessage("chatCreated",msg);
 								}
 								
 							});
-						}
-					
+						}		
 				
 					}
 				};
@@ -202,6 +240,14 @@ public class Connector {
 		}
 	}
 	
+	private void notifyMessage(Message msg){
+		ChatMessage chatMessage = new ChatMessage();
+		chatMessage.setjId(msg.getFrom());
+		chatMessage.setFrom(msg.getFrom());
+		chatMessage.setBody(msg.getBody());
+		chatMessage.setTo(msg.getTo());
+		mService.notifyMessage(chatMessage);
+	}
 	
 	public Chat createChat(String userId,final MessageListener msgListener){
 		if (mConnection != null) {
