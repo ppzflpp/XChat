@@ -6,8 +6,8 @@ interface IChatService{
 	boolean login(String userName,String password);
 	boolean register(String userName,String password); 
 	void close();
-	void registerChatListener(String jId,ChatMessageCallback callback);
-	void unregisterChatListener(String jId,ChatMessageCallback callback);
+	void registerChatMessageListener(String jId,ChatMessageCallback callback);
+	void unregisterChatMessageListener(String jId,ChatMessageCallback callback);
 	void sendMessage(String jId,String theadId,String msg);
 	List<Friend> getAllFriends();
 }

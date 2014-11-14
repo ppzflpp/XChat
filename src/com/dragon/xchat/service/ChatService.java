@@ -66,11 +66,14 @@ public class ChatService extends Service {
 	
 	public void notifyMessage(ChatMessage msg){
 		String jid = msg.getjId();
+		Log.d("TAG","notifyMessage 00,jid = " + jid);
 		//if jid has register , notify it to refresh
 		if(mChatMessageCallbackMap.containsKey(jid)){
 			msg.setIsRead(false);
 			try {
+				Log.d("TAG","notifyMessage 11");
 				mChatMessageCallbackMap.get(jid).onMessageRefresh(msg);
+				Log.d("TAG","notifyMessage 22");
 			} catch (RemoteException e) {
 				// TODO Auto-generated catch block
 				e.printStackTrace();
@@ -147,7 +150,8 @@ public class ChatService extends Service {
 		}
 		
 		
-		public void registerChatListener(String uid,ChatMessageCallback callback){
+		public void registerChatMessageListener(String uid,ChatMessageCallback callback){
+			Log.d("TAG","eeeeeee,registerChat Listener= " + callback + ",uid = " + uid);
 			if(callback != null){
 				mChatMessageCallbackMap.put(uid, callback);
 			}
@@ -171,7 +175,7 @@ public class ChatService extends Service {
 			
 		}
 		
-		public void unregisterChatListener(String uid,ChatMessageCallback callback){
+		public void unregisterChatMessageListener(String uid,ChatMessageCallback callback){
 			if(uid != null){
 				mChatMessageCallbackMap.remove(uid);
 			}

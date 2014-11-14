@@ -19,15 +19,17 @@
         style="?android:textAppearanceMediumInverse"
         android:layout_toRightOf="@id/msg_receive_icon"
         android:layout_alignParentTop="true"
-        android:layout_marginLeft="10dip" />
+        android:layout_marginLeft="10dip"
+        android:visibility="gone" />
 
     <TextView
         android:id="@+id/msg_receive_content"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        style="?android:textAppearanceSmallInverse"
+        style="?android:textAppearanceMediumInverse"
         android:layout_toRightOf="@id/msg_receive_icon"
         android:layout_below="@id/msg_receive_name"
         android:background="@drawable/bg_msg_receive"
-        android:layout_marginLeft="5dip" />
+        android:layout_marginLeft="5dip"
+        android:layout_marginTop="5dip" />
 </RelativeLayout>

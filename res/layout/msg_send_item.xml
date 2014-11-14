@@ -20,15 +20,17 @@
         style="?android:textAppearanceMediumInverse"
         android:layout_toLeftOf="@id/msg_send_icon"
         android:layout_alignParentTop="true"
-        android:layout_marginRight="10dip" />
+        android:layout_marginRight="10dip"
+        android:visibility="gone" />
 
     <TextView
         android:id="@+id/msg_send_content"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        style="?android:textAppearanceSmallInverse"
+        style="?android:textAppearanceMediumInverse"
         android:layout_toLeftOf="@id/msg_send_icon"
         android:layout_below="@id/msg_send_name"
         android:background="@drawable/bg_msg_send"
-        android:layout_marginRight="5dip" />
+        android:layout_marginRight="5dip" 
+        android:layout_marginTop="5dip"/>
 </RelativeLayout>

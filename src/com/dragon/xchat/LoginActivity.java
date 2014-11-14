@@ -22,6 +22,7 @@ import android.widget.EditText;
 import android.widget.TextView;
 import android.widget.Toast;
 
+import com.dragon.xchat.data.ChatMessage;
 import com.dragon.xchat.network.ConnectorHelper;
 import com.dragon.xchat.service.ChatService;
 import com.dragon.xchat.service.IChatService;
@@ -92,6 +93,7 @@ public class LoginActivity extends BaseActivity {
 	public void attemptLogin() {
 		mUserNameValue = mUserNameView.getText().toString();
 		mPasswordValue = mPasswordView.getText().toString();
+		
 		boolean result = InputUtils.checkInput(this, mUserNameValue,
 				mPasswordValue);
 		if (result){
@@ -119,8 +121,8 @@ public class LoginActivity extends BaseActivity {
 	 */
 	public class UserLoginTask extends AsyncTask<Void, Void, Boolean> {
 
-		private final String userName;
-		private final String password;
+		private  String userName;
+		private  String password;
 
 		UserLoginTask(String userName, String password) {
 			this.userName = userName;
@@ -175,5 +177,20 @@ public class LoginActivity extends BaseActivity {
 	
 	protected void onDestroy(){
 		super.onDestroy(null);
+	}
+	public void messageRefresh(ChatMessage msg){
+
+	}
+
+	@Override
+	public void onServiceConnected() {
+		// TODO Auto-generated method stub
+		
+	}
+
+	@Override
+	public void onServiceDisonnected() {
+		// TODO Auto-generated method stub
+		
 	}
 }

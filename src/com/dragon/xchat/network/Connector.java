@@ -45,6 +45,7 @@ import com.dragon.xchat.data.ChatMessage;
 import com.dragon.xchat.data.Friend;
 import com.dragon.xchat.service.ChatService;
 import com.dragon.xchat.utils.LogUtils;
+import com.dragon.xchat.utils.StringUtils;
 
 import android.content.Context;
 import android.util.Log;
@@ -178,7 +179,7 @@ public class Connector {
 			mChatList.put(jId, chat);
 		}
 		
-		Log.d("TAG","listeners = " + chat.getListeners().size());
+		Log.d("TAG","chat = " + chat + ",listeners = " + chat.getListeners().size());
 		
 		try {
 			chat.sendMessage(msg);
@@ -214,7 +215,7 @@ public class Connector {
 						// TODO Auto-generated method stub
 						if(isExist){
 							Log.i(TAG,"chat exist,return");
-						}else{
+						}else{						
 							if(!chat.getListeners().isEmpty()){
 								chat.getListeners().clear();
 							}
@@ -224,6 +225,14 @@ public class Connector {
 								public void processMessage(Chat chat,
 										Message msg) {
 									// TODO Auto-generated method stub
+									String jId = StringUtils.getJid(msg.getFrom());
+									Chat c = mChatList.get(jId);
+									if(c == null){
+										mChatList.put(jId, chat);
+									}else{
+										
+									}
+									
 									notifyMessage(msg);
 									LogUtils.printMessage("chatCreated",msg);
 								}
@@ -242,7 +251,7 @@ public class Connector {
 	
 	private void notifyMessage(Message msg){
 		ChatMessage chatMessage = new ChatMessage();
-		chatMessage.setjId(msg.getFrom());
+		chatMessage.setjId(StringUtils.getJid(msg.getFrom()));
 		chatMessage.setFrom(msg.getFrom());
 		chatMessage.setBody(msg.getBody());
 		chatMessage.setTo(msg.getTo());

@@ -24,6 +24,7 @@ import java.util.List;
 import java.util.Locale;
 
 import com.dragon.xchat.BaseActivity.ServiceConnectCallback;
+import com.dragon.xchat.data.ChatMessage;
 import com.dragon.xchat.data.Friend;
 import com.dragon.xchat.network.ConnectorHelper;
 
@@ -44,27 +45,6 @@ public class MainActivity extends BaseActivity {
 
 	@Override
 	protected void onCreate(Bundle savedInstanceState) {
-		this.setServiceCallback(new ServiceConnectCallback(){
-
-			@Override
-			public void onBind() {
-				// TODO Auto-generated method stub
-				synchronized(mLock){
-					if(!mCanLoadData){
-						mCanLoadData = true;
-						return;
-					}
-				}
-				loadData();
-			}
-
-			@Override
-			public void onUnBind() {
-				// TODO Auto-generated method stub
-				
-			}
-			
-		});
 		
 		super.onCreate(savedInstanceState);
 		setContentView(R.layout.activity_main);
@@ -143,8 +123,8 @@ public class MainActivity extends BaseActivity {
 		
 		/*******************************************/
 		synchronized(mLock){
-			if(!mCanLoadData){
-				mCanLoadData = true;
+			if(!mServiceOrViewReady){
+				mServiceOrViewReady = true;
 				return;
 			}
 		}
@@ -291,10 +271,6 @@ public class MainActivity extends BaseActivity {
 		protected void onPostExecute(Boolean result) {
 			// TODO Auto-generated method stub
 			super.onPostExecute(result);
-			Log.d("TAG","result = " + result);
-			if(friendsList != null){
-				Log.d("TAG","22 size = " + friendsList.size());
-			}
 			if(result){
 				chatFragment.setFriendsList(friendsList);
 			}
@@ -302,4 +278,25 @@ public class MainActivity extends BaseActivity {
 		}
     	
     }
+	public void messageRefresh(ChatMessage msg){
+
+	}
+
+	@Override
+	public void onServiceConnected() {
+		// TODO Auto-generated method stub
+		synchronized(mLock){
+			if(!mServiceOrViewReady){
+				mServiceOrViewReady = true;
+				return;
+			}
+		}
+		loadData();
+	}
+
+	@Override
+	public void onServiceDisonnected() {
+		// TODO Auto-generated method stub
+		
+	}
 }

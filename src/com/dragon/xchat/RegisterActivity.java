@@ -1,5 +1,6 @@
 package com.dragon.xchat;
 
+import com.dragon.xchat.data.ChatMessage;
 import com.dragon.xchat.network.ConnectorHelper;
 import com.dragon.xchat.utils.InputUtils;
 
@@ -148,7 +149,23 @@ public class RegisterActivity extends BaseActivity {
         }
     }
 	
+	public void messageRefresh(ChatMessage msg){
+
+	}
+	
 	protected void onDestroy(){
 		super.onDestroy(null);
+	}
+
+	@Override
+	public void onServiceConnected() {
+		// TODO Auto-generated method stub
+		
+	}
+
+	@Override
+	public void onServiceDisonnected() {
+		// TODO Auto-generated method stub
+		
 	}
 }

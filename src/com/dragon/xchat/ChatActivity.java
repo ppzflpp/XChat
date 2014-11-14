@@ -6,6 +6,8 @@ import org.jivesoftware.smack.SmackException.NotConnectedException;
 import org.jivesoftware.smack.XMPPException;
 import org.jivesoftware.smack.packet.Message;
 
+import com.dragon.xchat.data.ChatMessage;
+import com.dragon.xchat.data.ChatMessageCallback;
 import com.dragon.xchat.data.Friend;
 import com.dragon.xchat.network.ConnectorHelper;
 
@@ -13,6 +15,7 @@ import android.app.Activity;
 import android.os.Bundle;
 import android.os.Handler;
 import android.os.HandlerThread;
+import android.os.IBinder;
 import android.os.RemoteException;
 import android.util.Log;
 import android.view.Gravity;
@@ -37,17 +40,16 @@ public class ChatActivity extends BaseActivity {
 
 	private HandlerThread mHandlerThread = null;
 	private Handler mThreadHandler = null;
-	private Chat mChat;
 	private String mReceivedMsg = "";
 
-	private final static int UPDATE_CHAT_MSG = 0;
+	private final static int MSG_UPDATE_CHAT = 0;
 	private Handler mMainHander = new Handler() {
 		public void handleMessage(android.os.Message msg) {
 			super.handleMessage(msg);
 			switch (msg.what) {
-			case UPDATE_CHAT_MSG:
+			case MSG_UPDATE_CHAT:
 				addContentView(true, mReceivedMsg);
-				// mScrollview.fullScroll(ScrollView.FOCUS_DOWN);
+				adjustChatContentPosition();
 				break;
 			}
 		}
@@ -93,7 +95,7 @@ public class ChatActivity extends BaseActivity {
 							.show();
 				} else {
 					addContentView(false, mChatInputView.getText().toString());
-
+					adjustChatContentPosition();
 					mChatInputView.setText("");
 					mThreadHandler.post(new Runnable() {
 						public void run() {
@@ -113,13 +115,25 @@ public class ChatActivity extends BaseActivity {
 					});
 				}
 			}
-
 		});
 
 		mScrollview = (ScrollView) findViewById(R.id.scrollview);	
 		
+		synchronized(mLock){
+			if(!mServiceOrViewReady){
+				mServiceOrViewReady = true;
+				return;
+			}
+		}
+		registerMessageCallback();
 	}
 
+	public void messageRefresh(ChatMessage msg){
+		if(msg != null){
+			mReceivedMsg = msg.getBody();
+			mMainHander.sendEmptyMessage(MSG_UPDATE_CHAT);			
+		}
+	}
 
 	private void addContentView(boolean isReceivedMsg, String msg) {
 		View view = null;
@@ -158,5 +172,43 @@ public class ChatActivity extends BaseActivity {
 	protected void onDestroy() {
 		super.onDestroy(mFriend.getUid());
 	}
+
+	@Override
+	public void onServiceConnected() {
+		// TODO Auto-generated method stub
+		synchronized(mLock){
+			if(!mServiceOrViewReady){
+				mServiceOrViewReady = true;
+				return;
+			}
+		}
+		registerMessageCallback();
+	}
+
+	@Override
+	public void onServiceDisonnected() {
+		// TODO Auto-generated method stub
+		
+	}
+	
+	private void registerMessageCallback(){
+		try{
+		if(mChatService != null){
+			mChatService.registerChatMessageListener(mFriend.getUid(), mMessageCallback);
+		}
+		}catch(Exception e){
+			e.printStackTrace();
+		}
+	}
+	
+	private void adjustChatContentPosition(){
+		mMainHander.post(new Runnable() {  
+		    @Override  
+		    public void run() {  
+		    	mScrollview.fullScroll(ScrollView.FOCUS_DOWN);  
+		    }  
+		}); 
+	}
+	
 
 }

@@ -19,10 +19,10 @@ import android.util.Log;
 /**
  * A login screen that offers login via email/password.
  */
-public class BaseActivity extends FragmentActivity {
+public abstract class BaseActivity extends FragmentActivity {
 
 	protected Object mLock = new Object();
-	protected boolean mCanLoadData = false;
+	protected boolean mServiceOrViewReady = false;
 	
 	private ServiceConnectCallback mCallback;
 	
@@ -33,17 +33,13 @@ public class BaseActivity extends FragmentActivity {
 		public void onServiceConnected(ComponentName arg0, IBinder binder) {
 			// TODO Auto-generated method stub
 			mChatService =  IChatService.Stub.asInterface(binder); 
-			if(mCallback != null){
-				mCallback.onBind();
-			}
+			BaseActivity.this.onServiceConnected();
 		}
 
 		@Override
 		public void onServiceDisconnected(ComponentName arg0) {
 			// TODO Auto-generated method stub
-			if(mCallback != null){
-				mCallback.onUnBind();
-			}
+			BaseActivity.this.onServiceDisonnected();
 		}
 		
 	};
@@ -53,9 +49,13 @@ public class BaseActivity extends FragmentActivity {
 		@Override
 		public void onMessageRefresh(ChatMessage msg) throws RemoteException {
 			// TODO Auto-generated method stub
-			
+			messageRefresh(msg);
 		}
 	};
+	
+	public abstract void messageRefresh(ChatMessage msg);
+	public abstract void onServiceConnected();
+	public abstract void onServiceDisonnected();
 	
 	@Override
 	protected void onCreate(Bundle savedInstanceState) {
@@ -70,7 +70,7 @@ public class BaseActivity extends FragmentActivity {
 		if (mChatService != null && userName != null) {
 			try {
 				mChatService
-						.unregisterChatListener(userName, mMessageCallback);
+						.unregisterChatMessageListener(userName, mMessageCallback);
 				mChatService.close();
 			} catch (Exception e) {
 				e.printStackTrace();
