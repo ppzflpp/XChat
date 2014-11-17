@@ -21,5 +21,6 @@
 	 <string name="chat_with">与%s聊天</string>
 	 <string name="chat_input">请输入聊天内容</string>
 	 <string name="me">Me</string>
-	 
+	 <string name="action_add_friend">添加好友</string>
+	 <string name="query_hint">请输入好友用户名</string>
 </resources>

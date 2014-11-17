@@ -5,6 +5,7 @@ import android.app.ActionBar.Tab;
 import android.app.ActionBar.TabListener;
 import android.app.Activity;
 import android.app.FragmentTransaction;
+import android.content.Intent;
 import android.graphics.drawable.ColorDrawable;
 import android.os.AsyncTask;
 import android.os.Bundle;
@@ -159,9 +160,15 @@ public class MainActivity extends BaseActivity {
 		// as you specify a parent activity in AndroidManifest.xml.
 		int id = item.getItemId();
 
-		Log.d("tag", "onOptionsItemSelected.." + item);
-		if (id == R.id.action_settings) {
-			return true;
+		switch(id){
+		case R.id.action_add_friend:
+			Intent intent = new Intent(this,AddActivity.class);
+			this.startActivity(intent);
+			break;
+		case R.id.action_settings:
+			break;
+			default:
+				break;
 		}
 
 		return super.onOptionsItemSelected(item);
