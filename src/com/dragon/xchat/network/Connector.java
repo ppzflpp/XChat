@@ -40,6 +40,10 @@ import org.jivesoftware.smack.XMPPException.XMPPErrorException;
 import org.jivesoftware.smack.packet.Message;
 import org.jivesoftware.smack.tcp.XMPPTCPConnection;
 import org.jivesoftware.smackx.carbons.CarbonManager;
+import org.jivesoftware.smackx.disco.ServiceDiscoveryManager;
+import org.jivesoftware.smackx.search.ReportedData;
+import org.jivesoftware.smackx.search.UserSearchManager;
+import org.jivesoftware.smackx.xdata.Form;
 
 import com.dragon.xchat.data.ChatMessage;
 import com.dragon.xchat.data.Friend;
@@ -60,6 +64,7 @@ public class Connector {
 	private ConnectionConfiguration mConfig = null;
 	private ChatManager mChatManager;
 	private ChatManagerListener mChatManagerListener;
+	private UserSearchManager mUserSearchManager;
 	private Map<String,Chat> mChatList = new HashMap<String,Chat>();
 
 	private ChatService mService = null;
@@ -74,12 +79,25 @@ public class Connector {
 		if (mConfig == null) {
 
 			mConfig = new ConnectionConfiguration(IP, PORT);
-			mConfig.setSecurityMode(SecurityMode.disabled);
+
+			try {
+				MemorizingTrustManager.setKeyStoreFile("private", "sslkeys.bks");
+
+				SSLContext sc = SSLContext.getInstance("TLS");
+				MemorizingTrustManager mtm = new MemorizingTrustManager(mService.getApplicationContext());
+				sc.init(null, new X509TrustManager[] { mtm },
+						new java.security.SecureRandom());
+				mConfig.setCustomSSLContext(sc);
+			} catch (Exception e) {
+				e.printStackTrace();
+			}
+
+			//mConfig.setSecurityMode(SecurityMode.disabled);
 		}
 
 		if (mConnection == null) {
 			mConnection = new XMPPTCPConnection(mConfig);
-			mConnection.setPacketReplyTimeout(20 * 1000);
+			//mConnection.setPacketReplyTimeout(20 * 1000);
 			try {
 				mConnection.connect();
 			} catch (SmackException e) {
@@ -319,5 +337,45 @@ public class Connector {
 			}
 		}
 		return friends;
+	}
+	
+	public boolean searchFriend(String name){
+		if(mUserSearchManager == null)
+			Log.d("TAG","000");
+			//ServiceDiscoveryManager.getInstanceFor(mConnection)
+			mUserSearchManager = new UserSearchManager(mConnection);
+		
+		try {
+			Log.d("TAG","111");
+			Log.d("TAG","getServiceName = " + mConnection.getServiceName()
+					);
+			Form searchForm = mUserSearchManager.getSearchForm(mConnection.getServiceName());
+			Log.d("TAG","222");
+			Form answerForm = searchForm.createAnswerForm();
+			Log.d("TAG","333");
+			answerForm.setAnswer("userAccount",true);
+			answerForm.setAnswer("userPhote",name);
+			
+			
+			
+			ReportedData data = mUserSearchManager.getSearchResults(answerForm, "search"
+					+ mConnection.getServiceName());
+			Log.d("TAG","data = " + data);
+
+		} catch (NoResponseException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		} catch (XMPPErrorException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		} catch (NotConnectedException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
+		return false;
+	}
+	
+	public void addFriend(String name){
+		
 	}
 }

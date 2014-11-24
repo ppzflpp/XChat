@@ -140,7 +140,9 @@ public class LoginActivity extends BaseActivity {
 			boolean result = false;
 			
 			try {
+				Log.d("TAG","begin login");
 				result = mChatService.login(userName, password);
+				Log.d("TAG","end login");
 			} catch (RemoteException e) {
 				// TODO Auto-generated catch block
 				e.printStackTrace();

@@ -56,6 +56,19 @@ public class ConnectorHelper {
 			 mConnector.registerChatListener();
 	}
 	
+	public boolean searchFriend(String name){
+		if(mConnector != null){
+			return mConnector.searchFriend(name);
+		}
+		return false;
+	}
+	
+	public void addFriend(String name){
+		if(mConnector != null){
+			mConnector.addFriend(name);
+		}
+	}
+	
 	public List<Friend> getAllFriends(){
 		if(mConnector != null)
 			return mConnector.getAllFriends();

@@ -1,5 +1,7 @@
 package com.dragon.xchat;
 
+import org.jivesoftware.smackx.search.UserSearchManager;
+
 import com.dragon.xchat.data.ChatMessage;
 
 import android.os.AsyncTask;
@@ -78,7 +80,14 @@ public class AddActivity extends BaseActivity{
 		protected Boolean doInBackground(Void... params) {
 			boolean result = false;
 			
-			Log.d("TAG","doInBackground");
+			Log.d("TAG", "doInBackground");
+			try {
+				if (mChatService != null) {
+					boolean exist = mChatService.searchFriend(userName);
+				}
+			} catch (Exception e) {
+				e.printStackTrace();
+			}
 	
 			return result;
 		}

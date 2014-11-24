@@ -181,6 +181,18 @@ public class ChatService extends Service {
 			}
 		}
 
+		@Override
+		public boolean searchFriend(String name) throws RemoteException {
+			// TODO Auto-generated method stub
+			return mHelper.searchFriend(name);
+		}
+
+		@Override
+		public void addFriend(String name) throws RemoteException {
+			// TODO Auto-generated method stub
+			mHelper.addFriend(name);
+		}
+
 
 		
 	}
