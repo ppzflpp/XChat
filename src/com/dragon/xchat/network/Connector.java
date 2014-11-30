@@ -1,14 +1,6 @@
 package com.dragon.xchat.network;
 
 import java.io.IOException;
-import java.net.InetSocketAddress;
-import java.net.Proxy;
-import java.net.Socket;
-import java.security.KeyManagementException;
-import java.security.NoSuchAlgorithmException;
-import java.security.SecureRandom;
-import java.security.cert.CertificateException;
-import java.security.cert.X509Certificate;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashMap;
@@ -16,7 +8,6 @@ import java.util.List;
 import java.util.Map;
 
 import javax.net.ssl.SSLContext;
-import javax.net.ssl.TrustManager;
 import javax.net.ssl.X509TrustManager;
 
 import org.apache.harmony.javax.security.sasl.SaslException;
@@ -38,12 +29,36 @@ import org.jivesoftware.smack.XMPPConnection;
 import org.jivesoftware.smack.XMPPException;
 import org.jivesoftware.smack.XMPPException.XMPPErrorException;
 import org.jivesoftware.smack.packet.Message;
+import org.jivesoftware.smack.provider.ProviderManager;
 import org.jivesoftware.smack.tcp.XMPPTCPConnection;
-import org.jivesoftware.smackx.carbons.CarbonManager;
-import org.jivesoftware.smackx.disco.ServiceDiscoveryManager;
+import org.jivesoftware.smackx.address.provider.MultipleAddressesProvider;
+import org.jivesoftware.smackx.bytestreams.socks5.provider.BytestreamsProvider;
+import org.jivesoftware.smackx.chatstates.packet.ChatStateExtension;
+import org.jivesoftware.smackx.commands.provider.AdHocCommandDataProvider;
+import org.jivesoftware.smackx.delay.provider.DelayInformationProvider;
+import org.jivesoftware.smackx.disco.provider.DiscoverInfoProvider;
+import org.jivesoftware.smackx.disco.provider.DiscoverItemsProvider;
+import org.jivesoftware.smackx.iqlast.packet.LastActivity;
+import org.jivesoftware.smackx.iqprivate.PrivateDataManager;
+import org.jivesoftware.smackx.muc.packet.GroupChatInvitation;
+import org.jivesoftware.smackx.muc.provider.MUCAdminProvider;
+import org.jivesoftware.smackx.muc.provider.MUCOwnerProvider;
+import org.jivesoftware.smackx.muc.provider.MUCUserProvider;
+import org.jivesoftware.smackx.offline.packet.OfflineMessageInfo;
+import org.jivesoftware.smackx.offline.packet.OfflineMessageRequest;
+import org.jivesoftware.smackx.privacy.provider.PrivacyProvider;
 import org.jivesoftware.smackx.search.ReportedData;
+import org.jivesoftware.smackx.search.UserSearch;
 import org.jivesoftware.smackx.search.UserSearchManager;
+import org.jivesoftware.smackx.sharedgroups.packet.SharedGroupsInfo;
+import org.jivesoftware.smackx.si.provider.StreamInitiationProvider;
+import org.jivesoftware.smackx.vcardtemp.provider.VCardProvider;
 import org.jivesoftware.smackx.xdata.Form;
+import org.jivesoftware.smackx.xdata.provider.DataFormProvider;
+import org.jivesoftware.smackx.xevent.provider.MessageEventProvider;
+import org.jivesoftware.smackx.xhtmlim.provider.XHTMLExtensionProvider;
+
+import android.util.Log;
 
 import com.dragon.xchat.data.ChatMessage;
 import com.dragon.xchat.data.Friend;
@@ -51,21 +66,19 @@ import com.dragon.xchat.service.ChatService;
 import com.dragon.xchat.utils.LogUtils;
 import com.dragon.xchat.utils.StringUtils;
 
-import android.content.Context;
-import android.util.Log;
-
 public class Connector {
 
 	private static final String TAG = "XChat:Connector";
-	
+	private static final boolean USE_SSL = false;
 	private static final String IP = "112.124.120.18";
+	private static final int SSL_PORT = 5223;
 	private static final int PORT = 5222;
 	private XMPPConnection mConnection = null;
 	private ConnectionConfiguration mConfig = null;
 	private ChatManager mChatManager;
 	private ChatManagerListener mChatManagerListener;
 	private UserSearchManager mUserSearchManager;
-	private Map<String,Chat> mChatList = new HashMap<String,Chat>();
+	private Map<String, Chat> mChatList = new HashMap<String, Chat>();
 
 	private ChatService mService = null;
 
@@ -78,26 +91,33 @@ public class Connector {
 
 		if (mConfig == null) {
 
-			mConfig = new ConnectionConfiguration(IP, PORT);
+			configure();
 
-			try {
-				MemorizingTrustManager.setKeyStoreFile("private", "sslkeys.bks");
+			mConfig = new ConnectionConfiguration(IP, USE_SSL ? SSL_PORT : PORT);
 
-				SSLContext sc = SSLContext.getInstance("TLS");
-				MemorizingTrustManager mtm = new MemorizingTrustManager(mService.getApplicationContext());
-				sc.init(null, new X509TrustManager[] { mtm },
-						new java.security.SecureRandom());
-				mConfig.setCustomSSLContext(sc);
-			} catch (Exception e) {
-				e.printStackTrace();
-			}
+			if (USE_SSL) {
+				mConfig.setSecurityMode(SecurityMode.required);
+				try {
 
-			//mConfig.setSecurityMode(SecurityMode.disabled);
+					SSLContext sc = SSLContext.getInstance("TLS");
+					MemorizingTrustManager mtm = new MemorizingTrustManager(
+							mService.getApplicationContext());
+					sc.init(null, new X509TrustManager[] { mtm },
+							new java.security.SecureRandom());
+					mConfig.setCustomSSLContext(sc);
+					mConfig.setHostnameVerifier(mtm
+							.wrapHostnameVerifier(new org.apache.http.conn.ssl.StrictHostnameVerifier()));
+
+				} catch (Exception e) {
+					e.printStackTrace();
+				}
+			} else
+				mConfig.setSecurityMode(SecurityMode.disabled);
 		}
 
 		if (mConnection == null) {
 			mConnection = new XMPPTCPConnection(mConfig);
-			//mConnection.setPacketReplyTimeout(20 * 1000);
+			// mConnection.setPacketReplyTimeout(20 * 1000);
 			try {
 				mConnection.connect();
 			} catch (SmackException e) {
@@ -176,32 +196,33 @@ public class Connector {
 		return success;
 	}
 
-	public void sendMessage(String jId,String threadId,String msg){
+	public void sendMessage(String jId, String threadId, String msg) {
 		Chat chat = mChatList.get(jId);
-		Log.d("TAG","jid = " + jId);
-		if(chat == null){
-			Log.d("TAG","chat is null");
+		Log.d("TAG", "jid = " + jId);
+		if (chat == null) {
+			Log.d("TAG", "chat is null");
 			ChatManager manager = getChatManager();
-			chat = manager.createChat(jId, new MessageListener(){
+			chat = manager.createChat(jId, new MessageListener() {
 
 				@Override
 				public void processMessage(Chat chat, Message msg) {
 					// TODO Auto-generated method stub
-					Log.d("TAG","msg = " + msg.getBody());
-					if(mService != null){
+					Log.d("TAG", "msg = " + msg.getBody());
+					if (mService != null) {
 						notifyMessage(msg);
 					}
 				}
-				
+
 			});
 			mChatList.put(jId, chat);
 		}
-		
-		Log.d("TAG","chat = " + chat + ",listeners = " + chat.getListeners().size());
-		
+
+		Log.d("TAG", "chat = " + chat + ",listeners = "
+				+ chat.getListeners().size());
+
 		try {
 			chat.sendMessage(msg);
-			Log.d("TAG","send message,msg = " + msg);
+			Log.d("TAG", "send message,msg = " + msg);
 		} catch (NotConnectedException e) {
 			// TODO Auto-generated catch block
 			e.printStackTrace();
@@ -210,64 +231,64 @@ public class Connector {
 			e.printStackTrace();
 		}
 	}
-	
-	private ChatManager getChatManager(){
-		if (mChatManager == null){
-			mChatManager = ChatManager.getInstanceFor(mConnection);			
+
+	private ChatManager getChatManager() {
+		if (mChatManager == null) {
+			mChatManager = ChatManager.getInstanceFor(mConnection);
 		}
 		return mChatManager;
 	}
-	
-	public void registerChatListener(){
+
+	public void registerChatListener() {
 		if (mConnection != null) {
-			if (mChatManager == null){
-				mChatManager = ChatManager.getInstanceFor(mConnection);			
+			if (mChatManager == null) {
+				mChatManager = ChatManager.getInstanceFor(mConnection);
 			}
-			
-			if(mChatManagerListener == null)
-			{
-				mChatManagerListener = new ChatManagerListener(){
+
+			if (mChatManagerListener == null) {
+				mChatManagerListener = new ChatManagerListener() {
 
 					@Override
 					public void chatCreated(Chat chat, boolean isExist) {
 						// TODO Auto-generated method stub
-						if(isExist){
-							Log.i(TAG,"chat exist,return");
-						}else{						
-							if(!chat.getListeners().isEmpty()){
+						if (isExist) {
+							Log.i(TAG, "chat exist,return");
+						} else {
+							if (!chat.getListeners().isEmpty()) {
 								chat.getListeners().clear();
 							}
-							chat.addMessageListener(new MessageListener(){
+							chat.addMessageListener(new MessageListener() {
 
 								@Override
 								public void processMessage(Chat chat,
 										Message msg) {
 									// TODO Auto-generated method stub
-									String jId = StringUtils.getJid(msg.getFrom());
+									String jId = StringUtils.getJid(msg
+											.getFrom());
 									Chat c = mChatList.get(jId);
-									if(c == null){
+									if (c == null) {
 										mChatList.put(jId, chat);
-									}else{
-										
+									} else {
+
 									}
-									
+
 									notifyMessage(msg);
-									LogUtils.printMessage("chatCreated",msg);
+									LogUtils.printMessage("chatCreated", msg);
 								}
-								
+
 							});
-						}		
-				
+						}
+
 					}
 				};
 			}
-			
+
 			mChatManager.addChatListener(mChatManagerListener);
-			
+
 		}
 	}
-	
-	private void notifyMessage(Message msg){
+
+	private void notifyMessage(Message msg) {
 		ChatMessage chatMessage = new ChatMessage();
 		chatMessage.setjId(StringUtils.getJid(msg.getFrom()));
 		chatMessage.setFrom(msg.getFrom());
@@ -275,29 +296,28 @@ public class Connector {
 		chatMessage.setTo(msg.getTo());
 		mService.notifyMessage(chatMessage);
 	}
-	
-	public Chat createChat(String userId,final MessageListener msgListener){
+
+	public Chat createChat(String userId, final MessageListener msgListener) {
 		if (mConnection != null) {
-			if (mChatManager == null){
-				mChatManager = ChatManager.getInstanceFor(mConnection);			
+			if (mChatManager == null) {
+				mChatManager = ChatManager.getInstanceFor(mConnection);
 			}
-			
-			if(mChatManagerListener != null)
-			{
+
+			if (mChatManagerListener != null) {
 				mChatManager.removeChatListener(mChatManagerListener);
 				mChatManagerListener = null;
 			}
-			
-			mChatManagerListener = new ChatManagerListener(){
+
+			mChatManagerListener = new ChatManagerListener() {
 
 				@Override
 				public void chatCreated(Chat chat, boolean arg1) {
 					// TODO Auto-generated method stub
 					chat.addMessageListener(msgListener);
 				}
-				
+
 			};
-			
+
 			mChatManager.addChatListener(mChatManagerListener);
 		}
 		return mChatManager.createChat(userId, msgListener);
@@ -338,29 +358,24 @@ public class Connector {
 		}
 		return friends;
 	}
-	
-	public boolean searchFriend(String name){
-		if(mUserSearchManager == null)
-			Log.d("TAG","000");
-			//ServiceDiscoveryManager.getInstanceFor(mConnection)
-			mUserSearchManager = new UserSearchManager(mConnection);
-		
+
+	public boolean searchFriend(String name) {
+		if (mUserSearchManager == null)
+			Log.d("TAG", "000");
+		mUserSearchManager = new UserSearchManager(mConnection);
+
 		try {
-			Log.d("TAG","111");
-			Log.d("TAG","getServiceName = " + mConnection.getServiceName()
-					);
-			Form searchForm = mUserSearchManager.getSearchForm(mConnection.getServiceName());
-			Log.d("TAG","222");
+			Log.d("TAG", "111");
+			Form searchForm = mUserSearchManager.getSearchForm("search." + IP);
+			Log.d("TAG", "222");
 			Form answerForm = searchForm.createAnswerForm();
-			Log.d("TAG","333");
-			answerForm.setAnswer("userAccount",true);
-			answerForm.setAnswer("userPhote",name);
-			
-			
-			
-			ReportedData data = mUserSearchManager.getSearchResults(answerForm, "search"
-					+ mConnection.getServiceName());
-			Log.d("TAG","data = " + data);
+			Log.d("TAG", "333");
+			answerForm.setAnswer("userAccount", true);
+			answerForm.setAnswer("userPhote", name);
+
+			ReportedData data = mUserSearchManager.getSearchResults(answerForm,
+					"search" + mConnection.getServiceName());
+			Log.d("TAG", "data = " + data);
 
 		} catch (NoResponseException e) {
 			// TODO Auto-generated catch block
@@ -372,10 +387,165 @@ public class Connector {
 			// TODO Auto-generated catch block
 			e.printStackTrace();
 		}
+		Log.d("TAG", "search end");
 		return false;
 	}
-	
-	public void addFriend(String name){
-		
+
+	public void addFriend(String name) {
+
 	}
+
+	private void configure() {
+
+		// Private Data Storage
+		ProviderManager.addIQProvider("query", "jabber:iq:private",
+				new PrivateDataManager.PrivateDataIQProvider());
+
+		// Time
+		try {
+			ProviderManager.addIQProvider("query", "jabber:iq:time",
+					Class.forName("org.jivesoftware.smackx.packet.Time"));
+		} catch (ClassNotFoundException e) {
+			Log.w("TestClient",
+					"Can't load class for org.jivesoftware.smackx.packet.Time");
+		}
+
+		// Roster Exchange
+		// ProviderManager.addExtensionProvider("x","jabber:x:roster", new
+		// RosterExchangeProvider());
+
+		// Message Events
+		ProviderManager.addExtensionProvider("x", "jabber:x:event",
+				new MessageEventProvider());
+
+		// Chat State
+		ProviderManager.addExtensionProvider("active",
+				"http://jabber.org/protocol/chatstates",
+				new ChatStateExtension.Provider());
+		ProviderManager.addExtensionProvider("composing",
+				"http://jabber.org/protocol/chatstates",
+				new ChatStateExtension.Provider());
+		ProviderManager.addExtensionProvider("paused",
+				"http://jabber.org/protocol/chatstates",
+				new ChatStateExtension.Provider());
+		ProviderManager.addExtensionProvider("inactive",
+				"http://jabber.org/protocol/chatstates",
+				new ChatStateExtension.Provider());
+		ProviderManager.addExtensionProvider("gone",
+				"http://jabber.org/protocol/chatstates",
+				new ChatStateExtension.Provider());
+
+		// XHTML
+		ProviderManager.addExtensionProvider("html",
+				"http://jabber.org/protocol/xhtml-im",
+				new XHTMLExtensionProvider());
+
+		// Group Chat Invitations
+		ProviderManager.addExtensionProvider("x", "jabber:x:conference",
+				new GroupChatInvitation.Provider());
+
+		// Service Discovery # Items
+		ProviderManager.addIQProvider("query",
+				"http://jabber.org/protocol/disco#items",
+				new DiscoverItemsProvider());
+
+		// Service Discovery # Info
+		ProviderManager.addIQProvider("query",
+				"http://jabber.org/protocol/disco#info",
+				new DiscoverInfoProvider());
+
+		// Data Forms
+		ProviderManager.addExtensionProvider("x", "jabber:x:data",
+				new DataFormProvider());
+
+		// MUC User
+		ProviderManager.addExtensionProvider("x",
+				"http://jabber.org/protocol/muc#user", new MUCUserProvider());
+
+		// MUC Admin
+		ProviderManager.addIQProvider("query",
+				"http://jabber.org/protocol/muc#admin", new MUCAdminProvider());
+
+		// MUC Owner
+		ProviderManager.addIQProvider("query",
+				"http://jabber.org/protocol/muc#owner", new MUCOwnerProvider());
+
+		// Delayed Delivery
+		ProviderManager.addExtensionProvider("x", "jabber:x:delay",
+				new DelayInformationProvider());
+
+		// Version
+		try {
+			ProviderManager.addIQProvider("query", "jabber:iq:version",
+					Class.forName("org.jivesoftware.smackx.packet.Version"));
+		} catch (ClassNotFoundException e) {
+			// Not sure what's happening here.
+		}
+
+		ProviderManager.addIQProvider("query", "jabber:iq:search",
+				new UserSearch.Provider());
+		
+		// VCard
+		ProviderManager.addIQProvider("vCard", "vcard-temp",
+				new VCardProvider());
+
+		// Offline Message Requests
+		ProviderManager.addIQProvider("offline",
+				"http://jabber.org/protocol/offline",
+				new OfflineMessageRequest.Provider());
+
+		// Offline Message Indicator
+		ProviderManager.addExtensionProvider("offline",
+				"http://jabber.org/protocol/offline",
+				new OfflineMessageInfo.Provider());
+
+		// Last Activity
+		ProviderManager.addIQProvider("query", "jabber:iq:last",
+				new LastActivity.Provider());
+
+		// User Search
+		ProviderManager.addIQProvider("query", "jabber:iq:search",
+				new UserSearch.Provider());
+
+		// SharedGroupsInfo
+		ProviderManager.addIQProvider("sharedgroup",
+				"http://www.jivesoftware.org/protocol/sharedgroup",
+				new SharedGroupsInfo.Provider());
+
+		// JEP-33: Extended Stanza Addressing
+		ProviderManager.addExtensionProvider("addresses",
+				"http://jabber.org/protocol/address",
+				new MultipleAddressesProvider());
+
+		// FileTransfer
+		ProviderManager.addIQProvider("si", "http://jabber.org/protocol/si",
+				new StreamInitiationProvider());
+
+		ProviderManager.addIQProvider("query",
+				"http://jabber.org/protocol/bytestreams",
+				new BytestreamsProvider());
+
+		// Privacy
+		ProviderManager.addIQProvider("query", "jabber:iq:privacy",
+				new PrivacyProvider());
+		ProviderManager.addIQProvider("command",
+				"http://jabber.org/protocol/commands",
+				new AdHocCommandDataProvider());
+		ProviderManager.addExtensionProvider("malformed-action",
+				"http://jabber.org/protocol/commands",
+				new AdHocCommandDataProvider.MalformedActionError());
+		ProviderManager.addExtensionProvider("bad-locale",
+				"http://jabber.org/protocol/commands",
+				new AdHocCommandDataProvider.BadLocaleError());
+		ProviderManager.addExtensionProvider("bad-payload",
+				"http://jabber.org/protocol/commands",
+				new AdHocCommandDataProvider.BadPayloadError());
+		ProviderManager.addExtensionProvider("bad-sessionid",
+				"http://jabber.org/protocol/commands",
+				new AdHocCommandDataProvider.BadSessionIDError());
+		ProviderManager.addExtensionProvider("session-expired",
+				"http://jabber.org/protocol/commands",
+				new AdHocCommandDataProvider.SessionExpiredError());
+	}
+
 }
