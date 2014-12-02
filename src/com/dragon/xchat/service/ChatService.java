@@ -5,6 +5,9 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
+import android.app.Notification;
+import android.app.NotificationManager;
+import com.dragon.xchat.R;
 import org.jivesoftware.smack.packet.Message;
 
 import com.dragon.xchat.data.ChatMessage;
@@ -26,6 +29,7 @@ public class ChatService extends Service {
 	private Map<String,ChatMessageCallback> mChatMessageCallbackMap = new HashMap<String,ChatMessageCallback>();
 
 	private ChatServiceImpl mService;
+	private NotificationManager mNotificationManager ;
 	
 	@Override
 	public IBinder onBind(Intent intent) {
@@ -33,7 +37,7 @@ public class ChatService extends Service {
 		if(mService == null){
 			mService = new ChatServiceImpl(this);
 		}
-		Log.d("TAG","onBind");
+		Log.i("TAG", "onBind");
 		return mService;
 	}
 
@@ -41,6 +45,9 @@ public class ChatService extends Service {
 	public void onCreate() {
 		// TODO Auto-generated method stub
 		super.onCreate();
+		if(mNotificationManager == null){
+			mNotificationManager = (NotificationManager)getApplicationContext().getSystemService(Context.NOTIFICATION_SERVICE);
+		}
 	}
 
 
@@ -63,23 +70,45 @@ public class ChatService extends Service {
 		// TODO Auto-generated method stub
 		return super.onUnbind(intent);
 	}
-	
+
+	private void processNotification(boolean showNotification){
+		if(showNotification) {
+			Notification notification = new Notification.Builder(getApplicationContext())
+					.setContentText(getApplicationContext().getString(R.string.has_unread_msg))
+					.setContentTitle(getApplicationContext().getString(R.string.app_name))
+					.setSmallIcon(R.drawable.ic_launcher)
+					.build();
+			if (mNotificationManager != null) {
+				mNotificationManager.notify(0, notification);
+			}
+		}else{
+			if(mNotificationManager != null) {
+				mNotificationManager.cancel(0);
+			}
+		}
+	}
+
 	public void notifyMessage(ChatMessage msg){
+		refreshMessage(msg);
+	}
+
+	private void refreshMessage(ChatMessage msg){
 		String jid = msg.getjId();
-		Log.d("TAG","notifyMessage 00,jid = " + jid);
 		//if jid has register , notify it to refresh
 		if(mChatMessageCallbackMap.containsKey(jid)){
+			Log.d("TAG",".......1111.........");
 			msg.setIsRead(false);
 			try {
-				Log.d("TAG","notifyMessage 11");
 				mChatMessageCallbackMap.get(jid).onMessageRefresh(msg);
-				Log.d("TAG","notifyMessage 22");
 			} catch (RemoteException e) {
 				// TODO Auto-generated catch block
 				e.printStackTrace();
 			}
+		}else{
+			Log.d("TAG",".......222.........");
+			processNotification(true);
 		}
-		
+
 		//put message to map
 		List<ChatMessage> msgList = null;
 		if(mChatMessageMap.containsKey(jid))
@@ -88,9 +117,8 @@ public class ChatService extends Service {
 			msgList = new ArrayList<ChatMessage>();
 			mChatMessageMap.put(jid, msgList);
 		}
-		msgList.add(msg);		
+		msgList.add(msg);
 	}
-	
 	
 	
 	public class ChatServiceImpl extends IChatService.Stub{
@@ -151,11 +179,12 @@ public class ChatService extends Service {
 		
 		
 		public void registerChatMessageListener(String uid,ChatMessageCallback callback){
-			Log.d("TAG","eeeeeee,registerChat Listener= " + callback + ",uid = " + uid);
 			if(callback != null){
 				mChatMessageCallbackMap.put(uid, callback);
 			}
-			
+
+			processNotification(false);
+
 			if(mChatMessageMap.containsKey(uid)){
 				List<ChatMessage> list = mChatMessageMap.get(uid);
 				for(int i = 0; list != null && i < list.size();i++){
@@ -182,15 +211,15 @@ public class ChatService extends Service {
 		}
 
 		@Override
-		public boolean searchFriend(String name) throws RemoteException {
+		public List<Friend> searchFriend(String name) throws RemoteException {
 			// TODO Auto-generated method stub
 			return mHelper.searchFriend(name);
 		}
 
 		@Override
-		public void addFriend(String name) throws RemoteException {
+		public boolean addFriend(String name) throws RemoteException {
 			// TODO Auto-generated method stub
-			mHelper.addFriend(name);
+			return mHelper.addFriend(name);
 		}
 
 

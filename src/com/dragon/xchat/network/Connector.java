@@ -1,11 +1,7 @@
 package com.dragon.xchat.network;
 
 import java.io.IOException;
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 
 import javax.net.ssl.SSLContext;
 import javax.net.ssl.X509TrustManager;
@@ -117,7 +113,7 @@ public class Connector {
 
 		if (mConnection == null) {
 			mConnection = new XMPPTCPConnection(mConfig);
-			// mConnection.setPacketReplyTimeout(20 * 1000);
+			mConnection.setPacketReplyTimeout(20 * 1000);
 			try {
 				mConnection.connect();
 			} catch (SmackException e) {
@@ -359,23 +355,41 @@ public class Connector {
 		return friends;
 	}
 
-	public boolean searchFriend(String name) {
-		if (mUserSearchManager == null)
-			Log.d("TAG", "000");
-		mUserSearchManager = new UserSearchManager(mConnection);
+	public List<Friend> searchFriend(String name) {
+
+		List<Friend> friendsList = null;
+
+		if (mUserSearchManager == null) {
+			mUserSearchManager = new UserSearchManager(mConnection);
+		}
 
 		try {
-			Log.d("TAG", "111");
-			Form searchForm = mUserSearchManager.getSearchForm("search." + IP);
-			Log.d("TAG", "222");
+			Form searchForm = mUserSearchManager.getSearchForm("search." + mConnection.getServiceName());
 			Form answerForm = searchForm.createAnswerForm();
-			Log.d("TAG", "333");
-			answerForm.setAnswer("userAccount", true);
-			answerForm.setAnswer("userPhote", name);
+			answerForm.setAnswer("Username", true);
+			answerForm.setAnswer("search", name);
 
 			ReportedData data = mUserSearchManager.getSearchResults(answerForm,
-					"search" + mConnection.getServiceName());
-			Log.d("TAG", "data = " + data);
+					"search." + mConnection.getServiceName());
+
+			List<ReportedData.Row> rows = data.getRows();
+			Log.d("TAG","row size = " + rows.size());
+			for (int i = 0; rows != null && i < rows.size(); i++) {
+				if (friendsList == null)
+					friendsList = new ArrayList<Friend>();
+
+				Friend friend = new Friend();
+
+				List<String> usernames = rows.get(i).getValues("Username");
+				if(usernames.size() > 0)
+					friend.setName(usernames.get(0));
+
+				List<String> names = rows.get(i).getValues("Name");
+				if(names.size() > 0)
+					friend.setDesc(names.get(0));
+
+				friendsList.add(friend);
+			}
 
 		} catch (NoResponseException e) {
 			// TODO Auto-generated catch block
@@ -387,12 +401,30 @@ public class Connector {
 			// TODO Auto-generated catch block
 			e.printStackTrace();
 		}
-		Log.d("TAG", "search end");
-		return false;
+
+		return friendsList;
 	}
 
-	public void addFriend(String name) {
+	public boolean  addFriend(String name) {
+		return addFriend(name,"");
+	}
 
+	public boolean addFriend(String name,String nickName){
+		return addFriend(name,nickName,new String[]{"Firends"});
+	}
+
+	public boolean addFriend(String name,String nickName,String[] group){
+		boolean result = false;
+		name += "@" + mConnection.getServiceName();
+		try {
+			mConnection.getRoster().setSubscriptionMode(Roster.SubscriptionMode.accept_all);
+			mConnection.getRoster().createEntry(name, nickName, group);
+			result = true;
+		}catch(Exception e){
+			e.printStackTrace();
+			result = false;
+		}
+		return result;
 	}
 
 	private void configure() {

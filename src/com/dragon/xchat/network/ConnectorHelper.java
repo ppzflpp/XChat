@@ -56,17 +56,18 @@ public class ConnectorHelper {
 			 mConnector.registerChatListener();
 	}
 	
-	public boolean searchFriend(String name){
+	public List<Friend> searchFriend(String name){
 		if(mConnector != null){
 			return mConnector.searchFriend(name);
 		}
-		return false;
+		return null;
 	}
 	
-	public void addFriend(String name){
+	public boolean  addFriend(String name){
 		if(mConnector != null){
-			mConnector.addFriend(name);
+			return mConnector.addFriend(name);
 		}
+		return false;
 	}
 	
 	public List<Friend> getAllFriends(){

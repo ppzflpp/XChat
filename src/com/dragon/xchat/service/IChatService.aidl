@@ -9,7 +9,7 @@ interface IChatService{
 	void registerChatMessageListener(String jId,ChatMessageCallback callback);
 	void unregisterChatMessageListener(String jId,ChatMessageCallback callback);
 	void sendMessage(String jId,String theadId,String msg);
-	boolean searchFriend(String name);
-	void addFriend(String name);
+	List<Friend> searchFriend(String name);
+	boolean addFriend(String name);
 	List<Friend> getAllFriends();
 }

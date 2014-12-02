@@ -1,40 +1,34 @@
 package com.dragon.xchat;
 
-import org.jivesoftware.smackx.search.UserSearchManager;
-
-import com.dragon.xchat.data.ChatMessage;
-
+import android.app.ListFragment;
 import android.os.AsyncTask;
 import android.os.Bundle;
 import android.util.Log;
-import android.view.KeyEvent;
 import android.view.LayoutInflater;
-import android.view.Menu;
-import android.view.MenuItem;
-import android.view.View;
-import android.view.View.OnClickListener;
-import android.view.inputmethod.EditorInfo;
-import android.widget.ListView;
 import android.widget.SearchView;
 import android.widget.SearchView.OnQueryTextListener;
-import android.widget.TextView;
-import android.widget.TextView.OnEditorActionListener;
+import android.widget.Toast;
+import com.dragon.xchat.data.ChatMessage;
+import com.dragon.xchat.data.Friend;
+
+import java.util.List;
 
 
-
-public class AddActivity extends BaseActivity{
+public class SearchActivity extends BaseActivity{
 
 	private AddTask mAuthTask = null;
-	private ListView mSearchResultListView = null;
+	private SearchResultFragment mSearchResultListFragment = null;
 	private SearchView mSearchView;
+	private List<Friend> mFriends;
 
 
 	@Override
 	protected void onCreate(Bundle savedInstanceState) {
 		super.onCreate(savedInstanceState);
 		setContentView(R.layout.activity_add);
-		
-		mSearchResultListView = (ListView)findViewById(R.id.search_result_list);
+
+		mSearchResultListFragment =(SearchResultFragment) this.getFragmentManager().findFragmentById(R.id.search_result_list);
+
 		mSearchView = (SearchView)LayoutInflater.from(getApplicationContext()).inflate(
 				R.layout.actionbar_search_view, null);
 		mSearchView.setOnQueryTextListener(new OnQueryTextListener(){
@@ -83,7 +77,14 @@ public class AddActivity extends BaseActivity{
 			Log.d("TAG", "doInBackground");
 			try {
 				if (mChatService != null) {
-					boolean exist = mChatService.searchFriend(userName);
+					List<Friend> friends = mChatService.searchFriend(userName);
+					if(friends == null) {
+						mFriends = null;
+						return false;
+					}else {
+						mFriends = friends;
+						return true;
+					}
 				}
 			} catch (Exception e) {
 				e.printStackTrace();
@@ -95,7 +96,11 @@ public class AddActivity extends BaseActivity{
 		@Override
 		protected void onPostExecute(final Boolean success) {
 			mAuthTask = null;
-			
+			if(success){
+				mSearchResultListFragment.setFriendsList(mFriends);
+			}else{
+				Toast.makeText(getApplicationContext(),R.string.search_no_friends,Toast.LENGTH_LONG).show();
+			}
 		}
 
 		@Override

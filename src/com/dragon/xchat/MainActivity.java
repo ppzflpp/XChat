@@ -162,7 +162,7 @@ public class MainActivity extends BaseActivity {
 
 		switch(id){
 		case R.id.action_add_friend:
-			Intent intent = new Intent(this,AddActivity.class);
+			Intent intent = new Intent(this,SearchActivity.class);
 			this.startActivity(intent);
 			break;
 		case R.id.action_settings:
