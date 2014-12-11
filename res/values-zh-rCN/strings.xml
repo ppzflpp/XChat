@@ -38,5 +38,9 @@
     <string name="me">我</string>
     <string name="action_add_friend">添加好友</string>
     <string name="query_hint">请输入好友用户名</string>
+    <string name="add_friend_success">添加好友成功</string>
+    <string name="add_friend_fail">添加好友失败</string>
+    <string name="has_unread_msg">有未读消息</string>
+    <string name="search_no_friends">不存在此好友</string>
 
 </resources>
