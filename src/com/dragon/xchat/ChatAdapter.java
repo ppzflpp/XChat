@@ -64,7 +64,7 @@ public class ChatAdapter extends BaseAdapter {
         if (pos == 0) {
             if (CHAT_LIST_FIXED_LENGTH == 1) {
                 
-                iconView.setImageResource(R.drawable.ic_launcher);
+                iconView.setBackgroundResource(R.drawable.ic_launcher);
                 nameView.setText(R.string.team_name);
                 contentView.setText(R.string.team_desc);
                 timeView.setText("");
@@ -72,7 +72,7 @@ public class ChatAdapter extends BaseAdapter {
                 //do normal things
             }
         }else{
-        	iconView.setImageResource(R.drawable.head_icon);
+        	iconView.setBackgroundResource(R.drawable.head_icon);
             nameView.setText(mArrayList.get(pos-1).getName());
             contentView.setText(mArrayList.get(pos-1).getDesc());
             timeView.setText("");
@@ -90,5 +90,5 @@ public class ChatAdapter extends BaseAdapter {
             throw new Exception("fixedLength must be 0 or 1");
         }
         CHAT_LIST_FIXED_LENGTH = fixedLength;
-    }
+    } 
 }

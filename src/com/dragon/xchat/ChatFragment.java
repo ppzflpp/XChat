@@ -2,6 +2,8 @@ package com.dragon.xchat;
 
 import java.util.List;
 
+
+
 import android.app.Activity;
 import android.content.Intent;
 import android.os.AsyncTask;
@@ -10,6 +12,7 @@ import android.os.RemoteException;
 import android.support.v4.app.ListFragment;
 import android.util.Log;
 import android.view.View;
+import android.widget.ImageView;
 import android.widget.ListView;
 
 import com.dragon.xchat.data.Friend;
@@ -63,6 +66,7 @@ public class ChatFragment extends ListFragment {
         if(position == 0){
         	return;
         }else{
+        	refreshItem(false,position);
         	Intent intent = new Intent(getActivity(),ChatActivity.class);
         	intent.putExtra("friend", mFriendsList.get(position-1));
         	getActivity().startActivity(intent);
@@ -75,6 +79,24 @@ public class ChatFragment extends ListFragment {
     		mChatAdapter.setList(mFriendsList);
     		mChatAdapter.notifyDataSetChanged();
     	}
+    }
+    
+    public void refreshItem(boolean hasMsg,int index){
+		if (hasMsg) {
+			View view = this.getListView().getChildAt(index);
+			ImageView imageView = (ImageView)view.findViewById(R.id.chat_item_icon);
+			if (imageView != null) {
+				imageView.setImageResource(R.drawable.unread_dot);
+			}
+			view.invalidate();
+		}else{
+			View view = this.getListView().getChildAt(index);
+			ImageView imageView = (ImageView)view.findViewById(R.id.chat_item_icon);
+			if (imageView != null) {
+				imageView.setImageResource(0);
+			}
+			view.invalidate();
+		}
     }
 
 }

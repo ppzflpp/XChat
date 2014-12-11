@@ -7,7 +7,12 @@ import java.util.Map;
 
 import android.app.Notification;
 import android.app.NotificationManager;
+import android.app.PendingIntent;
+
+import com.dragon.xchat.ChatActivity;
+import com.dragon.xchat.MainActivity;
 import com.dragon.xchat.R;
+
 import org.jivesoftware.smack.packet.Message;
 
 import com.dragon.xchat.data.ChatMessage;
@@ -71,13 +76,20 @@ public class ChatService extends Service {
 		return super.onUnbind(intent);
 	}
 
-	private void processNotification(boolean showNotification){
+	private void processNotification(boolean showNotification,Friend friend){
 		if(showNotification) {
+			Intent intent = new Intent();
+			intent.setClass(getApplicationContext(), MainActivity.class);
+			
+			PendingIntent pendingIntent = PendingIntent.getActivity(getApplicationContext(), 0, intent, PendingIntent.FLAG_UPDATE_CURRENT);
+			
 			Notification notification = new Notification.Builder(getApplicationContext())
 					.setContentText(getApplicationContext().getString(R.string.has_unread_msg))
 					.setContentTitle(getApplicationContext().getString(R.string.app_name))
 					.setSmallIcon(R.drawable.ic_launcher)
+					.setContentIntent(pendingIntent)
 					.build();
+			
 			if (mNotificationManager != null) {
 				mNotificationManager.notify(0, notification);
 			}
@@ -96,7 +108,6 @@ public class ChatService extends Service {
 		String jid = msg.getjId();
 		//if jid has register , notify it to refresh
 		if(mChatMessageCallbackMap.containsKey(jid)){
-			Log.d("TAG",".......1111.........");
 			msg.setIsRead(false);
 			try {
 				mChatMessageCallbackMap.get(jid).onMessageRefresh(msg);
@@ -105,8 +116,24 @@ public class ChatService extends Service {
 				e.printStackTrace();
 			}
 		}else{
-			Log.d("TAG",".......222.........");
-			processNotification(true);
+			msg.setIsRead(false);
+			//1st:send notification
+			Friend friend = new Friend();
+			friend.setName(msg.getjId());
+			friend.setUid(msg.getjId());
+			processNotification(true,friend);
+			
+			//2nd refresh main list
+			ChatMessageCallback callback = mChatMessageCallbackMap
+					.get(MainActivity.MAIN_ACTIVITY_REFRESH_TAG);
+			if (callback != null) {
+				try {
+					callback.onMessageRefresh(msg);
+				} catch (Exception e) {
+					e.printStackTrace();
+				}
+			}
+		
 		}
 
 		//put message to map
@@ -180,10 +207,11 @@ public class ChatService extends Service {
 		
 		public void registerChatMessageListener(String uid,ChatMessageCallback callback){
 			if(callback != null){
+				Log.d("TAG","uid = " + uid);
 				mChatMessageCallbackMap.put(uid, callback);
 			}
 
-			processNotification(false);
+			processNotification(false,null);
 
 			if(mChatMessageMap.containsKey(uid)){
 				List<ChatMessage> list = mChatMessageMap.get(uid);
