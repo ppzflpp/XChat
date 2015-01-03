@@ -186,7 +186,7 @@ public class ChatActivity extends BaseActivity {
 	}
 
 	@Override
-	public void onServiceDisonnected() {
+	public void onServiceDisconnected() {
 		// TODO Auto-generated method stub
 		
 	}

@@ -2,10 +2,8 @@ package com.dragon.xchat;
 
 import android.annotation.TargetApi;
 import android.app.Activity;
-import android.content.ComponentName;
-import android.content.Context;
-import android.content.Intent;
-import android.content.ServiceConnection;
+import android.app.ProgressDialog;
+import android.content.*;
 import android.os.AsyncTask;
 import android.os.Build;
 import android.os.Bundle;
@@ -45,6 +43,9 @@ public class LoginActivity extends BaseActivity {
 	private String mUserNameValue;
 	private String mPasswordValue;
 
+	private ProgressDialog mLoginDialog = null;
+	private boolean mAutoLogin = false;
+
 	@Override
 	protected void onCreate(Bundle savedInstanceState) {
 		super.onCreate(savedInstanceState);
@@ -79,9 +80,44 @@ public class LoginActivity extends BaseActivity {
 		mLoginButton.setOnClickListener(new OnClickListener() {
 			@Override
 			public void onClick(View view) {
+				mUserNameValue = mUserNameView.getText().toString();
+				mPasswordValue = mPasswordView.getText().toString();
+				processViews(true);
 				attemptLogin();
 			}
 		});
+
+
+	}
+
+	private void processViews(boolean login){
+		if(login){
+			if(mLoginDialog != null){
+				mLoginDialog.dismiss();
+				mLoginDialog = null;
+			}
+			mLoginDialog = new ProgressDialog(this);
+			mLoginDialog.setMessage(getString(R.string.user_logining));
+			mLoginDialog.setProgressStyle(ProgressDialog.STYLE_SPINNER);
+			mLoginDialog.show();
+
+		}else{
+			if(mLoginDialog != null){
+				mLoginDialog.dismiss();
+				mLoginDialog = null;
+			}
+		}
+	}
+
+	private boolean checkLogin(){
+		SharedPreferences sp = LoginActivity.this.getSharedPreferences("login_info",Context.MODE_PRIVATE);
+		boolean result = false;
+		result = sp.getBoolean("login",false);
+		if(result){
+			mUserNameValue = sp.getString("username","");
+			mPasswordValue = sp.getString("password","");
+		}
+		return result;
 	}
 
 	private void registerUser() {
@@ -91,8 +127,6 @@ public class LoginActivity extends BaseActivity {
 	}
 
 	public void attemptLogin() {
-		mUserNameValue = mUserNameView.getText().toString();
-		mPasswordValue = mPasswordView.getText().toString();
 		
 		boolean result = InputUtils.checkInput(this, mUserNameValue,
 				mPasswordValue);
@@ -140,9 +174,15 @@ public class LoginActivity extends BaseActivity {
 			boolean result = false;
 			
 			try {
-				Log.d("TAG","begin login");
 				result = mChatService.login(userName, password);
-				Log.d("TAG","end login");
+				if(result && !mAutoLogin){
+					SharedPreferences sp = LoginActivity.this.getSharedPreferences("login_info",Context.MODE_PRIVATE);
+					SharedPreferences.Editor editor = sp.edit();
+					editor.putBoolean("login",true);
+					editor.putString("username", userName);
+					editor.putString("password",password);
+					editor.commit();
+				}
 			} catch (RemoteException e) {
 				// TODO Auto-generated catch block
 				e.printStackTrace();
@@ -155,6 +195,8 @@ public class LoginActivity extends BaseActivity {
 		protected void onPostExecute(final Boolean success) {
 			mAuthTask = null;
 			showProgress(false);
+
+			processViews(false);
 
 			if (success) {
 				Intent intent = new Intent();
@@ -187,11 +229,15 @@ public class LoginActivity extends BaseActivity {
 	@Override
 	public void onServiceConnected() {
 		// TODO Auto-generated method stub
-		
+		if(checkLogin()){
+			mAutoLogin = true;
+			processViews(true);
+			attemptLogin();
+		}
 	}
 
 	@Override
-	public void onServiceDisonnected() {
+	public void onServiceDisconnected() {
 		// TODO Auto-generated method stub
 		
 	}

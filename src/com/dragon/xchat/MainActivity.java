@@ -1,41 +1,34 @@
 package com.dragon.xchat;
 
+import java.util.List;
+
 import android.app.ActionBar;
-import android.support.v4.app.ListFragment;
 import android.app.ActionBar.Tab;
 import android.app.ActionBar.TabListener;
-import android.app.Activity;
 import android.app.FragmentTransaction;
 import android.content.Intent;
 import android.graphics.drawable.ColorDrawable;
 import android.os.AsyncTask;
 import android.os.Bundle;
+import android.os.Handler;
+import android.os.Message;
 import android.os.RemoteException;
 import android.support.v4.app.Fragment;
-import android.support.v4.app.FragmentActivity;
 import android.support.v4.app.FragmentManager;
 import android.support.v4.app.FragmentPagerAdapter;
 import android.support.v4.view.PagerAdapter;
 import android.support.v4.view.ViewPager;
 import android.util.Log;
-import android.view.ActionMode;
 import android.view.Menu;
 import android.view.MenuItem;
-import android.view.View;
-import android.widget.ListView;
 
-import java.util.List;
-import java.util.Locale;
-
-import com.dragon.xchat.BaseActivity.ServiceConnectCallback;
 import com.dragon.xchat.data.ChatMessage;
 import com.dragon.xchat.data.Friend;
-import com.dragon.xchat.network.ConnectorHelper;
 
 public class MainActivity extends BaseActivity {
 
 	private static final String TAG = "MainActivity";
-	
+
 	public final static String MAIN_ACTIVITY_REFRESH_TAG = "MAIN_LIST";
 
 	public static final int DISCOVER_FRAGMENT_POS = 1;
@@ -45,6 +38,23 @@ public class MainActivity extends BaseActivity {
 	private String mUserName = null;
 	private List<Friend> mFriendsList = null;
 
+	private final static int MSG_UPDATE_CHAT = 0;
+	private final static int MSG_LOAD_DATA = 1;
+	private Handler mMainHandler = new Handler() {
+		public void handleMessage(Message msg) {
+			super.handleMessage(msg);
+			switch (msg.what) {
+				case MSG_UPDATE_CHAT:
+					(((ViewPagerAdapter) mSectionsPagerAdapter).mChatFragment)
+							.refreshItem(msg.arg1 == 1 ? true : false, msg.arg2);
+					break;
+				case MSG_LOAD_DATA:
+					loadData();
+					break;
+			}
+		}
+	};
+
 	/**
 	 * The {@link ViewPager} that will host the section contents.
 	 */
@@ -52,7 +62,7 @@ public class MainActivity extends BaseActivity {
 
 	@Override
 	protected void onCreate(Bundle savedInstanceState) {
-		
+
 		super.onCreate(savedInstanceState);
 		setContentView(R.layout.activity_main);
 
@@ -106,28 +116,28 @@ public class MainActivity extends BaseActivity {
 
 						@Override
 						public void onTabReselected(Tab arg0,
-								FragmentTransaction arg1) {
+													FragmentTransaction arg1) {
 							// TODO Auto-generated method stub
 
 						}
 
 						@Override
 						public void onTabSelected(Tab arg0,
-								FragmentTransaction arg1) {
+												  FragmentTransaction arg1) {
 							// TODO Auto-generated method stub
 							mViewPager.setCurrentItem(item);
 						}
 
 						@Override
 						public void onTabUnselected(Tab arg0,
-								FragmentTransaction arg1) {
+													FragmentTransaction arg1) {
 							// TODO Auto-generated method stub
 
 						}
 
 					}));
 		}
-		
+
 		/*******************************************/
 		synchronized(mLock){
 			if(!mServiceOrViewReady){
@@ -135,15 +145,15 @@ public class MainActivity extends BaseActivity {
 				return;
 			}
 		}
-		loadData();
+		mMainHandler.sendEmptyMessage(MSG_LOAD_DATA);
 		/**********************************************/
 	}
-	
+
 	private void registerMessageCallback(){
 		try{
-		if(mChatService != null){
-			mChatService.registerChatMessageListener(MAIN_ACTIVITY_REFRESH_TAG, mMessageCallback);
-		}
+			if(mChatService != null){
+				mChatService.registerChatMessageListener(MAIN_ACTIVITY_REFRESH_TAG, mMessageCallback);
+			}
 		}catch(Exception e){
 			e.printStackTrace();
 		}
@@ -152,11 +162,11 @@ public class MainActivity extends BaseActivity {
 	private void loadData(){
 		ChatFragment fragment = (ChatFragment)((ViewPagerAdapter)mSectionsPagerAdapter).getFragemnt(CHAT_FRAGMENT_POS);
 		FriendsTask task = new FriendsTask(fragment,null);
-		task.execute();	
-		
+		task.execute();
+
 		registerMessageCallback();
 	}
-	
+
 	@Override
 	public boolean onCreateOptionsMenu(Menu menu) {
 		// Inflate the menu; this adds items to the action bar if it is present.
@@ -178,12 +188,12 @@ public class MainActivity extends BaseActivity {
 		int id = item.getItemId();
 
 		switch(id){
-		case R.id.action_add_friend:
-			Intent intent = new Intent(this,SearchActivity.class);
-			this.startActivity(intent);
-			break;
-		case R.id.action_settings:
-			break;
+			case R.id.action_add_friend:
+				Intent intent = new Intent(this,SearchActivity.class);
+				this.startActivity(intent);
+				break;
+			case R.id.action_settings:
+				break;
 			default:
 				break;
 		}
@@ -198,22 +208,22 @@ public class MainActivity extends BaseActivity {
 	public class ViewPagerAdapter extends FragmentPagerAdapter {
 
 		public ChatFragment mChatFragment;
-		
+
 		public ViewPagerAdapter(FragmentManager fm) {
 			super(fm);
 			// TODO Auto-generated constructor stub
 		}
-		
+
 		public Fragment getFragemnt(int pos){
 			Fragment fm = null;
 			switch (pos) {
-			case DISCOVER_FRAGMENT_POS:
-				break;
-			case CHAT_FRAGMENT_POS:
-				fm  = mChatFragment;
-				break;
-			default:
-				break;
+				case DISCOVER_FRAGMENT_POS:
+					break;
+				case CHAT_FRAGMENT_POS:
+					fm  = mChatFragment;
+					break;
+				default:
+					break;
 			}
 			return fm;
 		}
@@ -223,16 +233,16 @@ public class MainActivity extends BaseActivity {
 			// TODO Auto-generated method stub
 			Fragment fm = null;
 			switch (pos) {
-			case DISCOVER_FRAGMENT_POS:
-				fm = new DiscoverFragment();
-				break;
-			case CHAT_FRAGMENT_POS:
-				mChatFragment = new ChatFragment(mUserName);
-				fm  = mChatFragment;
-				break;
-			default:
-				Log.e(TAG, "ViewPagaerAdapter,error occur");
-				break;
+				case DISCOVER_FRAGMENT_POS:
+					fm = new DiscoverFragment();
+					break;
+				case CHAT_FRAGMENT_POS:
+					mChatFragment = new ChatFragment(mUserName);
+					fm  = mChatFragment;
+					break;
+				default:
+					Log.e(TAG, "ViewPagaerAdapter,error occur");
+					break;
 			}
 
 			return fm;
@@ -243,12 +253,12 @@ public class MainActivity extends BaseActivity {
 			// TODO Auto-generated method stub
 			CharSequence title = "";
 			switch (position) {
-			case DISCOVER_FRAGMENT_POS:
-				title = getString(R.string.discover);
-				break;
-			case CHAT_FRAGMENT_POS:
-				title = getString(R.string.chat);
-				break;
+				case DISCOVER_FRAGMENT_POS:
+					title = getString(R.string.discover);
+					break;
+				case CHAT_FRAGMENT_POS:
+					title = getString(R.string.chat);
+					break;
 			}
 			return title;
 		}
@@ -260,21 +270,21 @@ public class MainActivity extends BaseActivity {
 		}
 
 	}
-	
+
 	protected void onDestroy(){
 		super.onDestroy(MAIN_ACTIVITY_REFRESH_TAG);
 	}
-	
-	   
-    class FriendsTask extends AsyncTask<Void,Void,Boolean>{
-    	
-    	private String userName = null;
-    	private ChatFragment chatFragment = null;   	
-    	
-    	public FriendsTask(ChatFragment fragment,String userName){
-    		chatFragment = fragment ;
-    		this.userName = userName;
-    	}
+
+
+	class FriendsTask extends AsyncTask<Void,Void,Boolean>{
+
+		private String userName = null;
+		private ChatFragment chatFragment = null;
+
+		public FriendsTask(ChatFragment fragment,String userName){
+			chatFragment = fragment ;
+			this.userName = userName;
+		}
 
 		@Override
 		protected Boolean doInBackground(Void... arg0) {
@@ -297,16 +307,18 @@ public class MainActivity extends BaseActivity {
 			if(result){
 				chatFragment.setFriendsList(mFriendsList);
 			}
-			
+
 		}
-    	
-    }
+
+	}
 	public void messageRefresh(ChatMessage msg){
-		Log.d("TAG","refreshItem....4");
 		if(!msg.isRead()){
-			Log.d("TAG","refreshItem....5");
 			int index = getFriendIndex(msg.getjId());
-			(((ViewPagerAdapter) mSectionsPagerAdapter).mChatFragment).refreshItem(true,index+1);;			
+			Message message = Message.obtain();
+			message.what = MSG_UPDATE_CHAT;
+			message.arg1 = 1;
+			message.arg2 = index + 1;
+			mMainHandler.sendMessage(message);
 		}
 	}
 
@@ -317,11 +329,11 @@ public class MainActivity extends BaseActivity {
 			if(friend.getUid().equals(jid)){
 				return i;
 			}
-				
+
 		}
 		return result;
 	}
-	
+
 	@Override
 	public void onServiceConnected() {
 		// TODO Auto-generated method stub
@@ -331,13 +343,13 @@ public class MainActivity extends BaseActivity {
 				return;
 			}
 		}
-		loadData();
+		mMainHandler.sendEmptyMessage(MSG_LOAD_DATA);
 	}
 
 	@Override
-	public void onServiceDisonnected() {
+	public void onServiceDisconnected() {
 		// TODO Auto-generated method stub
-		
+
 	}
 
 }

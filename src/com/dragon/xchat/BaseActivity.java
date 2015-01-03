@@ -39,7 +39,7 @@ public abstract class BaseActivity extends FragmentActivity {
 		@Override
 		public void onServiceDisconnected(ComponentName arg0) {
 			// TODO Auto-generated method stub
-			BaseActivity.this.onServiceDisonnected();
+			BaseActivity.this.onServiceDisconnected();
 		}
 		
 	};
@@ -55,7 +55,7 @@ public abstract class BaseActivity extends FragmentActivity {
 	
 	public abstract void messageRefresh(ChatMessage msg);
 	public abstract void onServiceConnected();
-	public abstract void onServiceDisonnected();
+	public abstract void onServiceDisconnected();
 	
 	@Override
 	protected void onCreate(Bundle savedInstanceState) {
