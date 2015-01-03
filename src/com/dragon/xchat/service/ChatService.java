@@ -9,6 +9,10 @@ import android.app.Notification;
 import android.app.NotificationManager;
 import android.app.PendingIntent;
 
+import com.baidu.location.BDLocation;
+import com.baidu.location.BDLocationListener;
+import com.baidu.location.LocationClient;
+import com.baidu.location.LocationClientOption;
 import com.dragon.xchat.ChatActivity;
 import com.dragon.xchat.MainActivity;
 import com.dragon.xchat.R;
@@ -35,6 +39,20 @@ public class ChatService extends Service {
 
 	private ChatServiceImpl mService;
 	private NotificationManager mNotificationManager ;
+	private LocationClient mLocationClient = null;
+	private BDLocationListener mBDListener = new BDLocationListener() {
+
+		@Override
+		public void onReceiveLocation(BDLocation bdLocation) {
+			String city = bdLocation.getAddrStr();
+			if(city != null && !city.equals("")){
+				Log.d("TAG","city = " + city);
+				mLocationClient.unRegisterLocationListener(this);
+				mLocationClient.stop();
+				mLocationClient = null;
+			}
+		}
+	};
 	
 	@Override
 	public IBinder onBind(Intent intent) {
@@ -52,6 +70,19 @@ public class ChatService extends Service {
 		super.onCreate();
 		if(mNotificationManager == null){
 			mNotificationManager = (NotificationManager)getApplicationContext().getSystemService(Context.NOTIFICATION_SERVICE);
+		}
+
+		if(mLocationClient == null) {
+			mLocationClient = new LocationClient(getApplicationContext());
+			LocationClientOption option = new LocationClientOption();
+			option.setLocationMode(LocationClientOption.LocationMode.Hight_Accuracy);
+			option.setCoorType("bd09ll");
+			option.setScanSpan(5000);
+			option.setIsNeedAddress(true);
+			option.setNeedDeviceDirect(true);
+			mLocationClient.setLocOption(option);
+			mLocationClient.registerLocationListener(mBDListener);
+			mLocationClient.start();
 		}
 	}
 
@@ -74,6 +105,15 @@ public class ChatService extends Service {
 	public boolean onUnbind(Intent intent) {
 		// TODO Auto-generated method stub
 		return super.onUnbind(intent);
+	}
+
+	@Override
+	public void onDestroy(){
+		super.onDestroy();
+		if(mLocationClient != null) {
+			mLocationClient.unRegisterLocationListener(mBDListener);
+			mLocationClient.stop();
+		}
 	}
 
 	private void processNotification(boolean showNotification,Friend friend){
